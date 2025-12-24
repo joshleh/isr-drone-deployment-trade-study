@@ -22,6 +22,7 @@ This trade study evaluated alternative ISR drone deployment strategies under var
 - Static deployments demonstrate near-perfect persistence, with mean and 90th-percentile revisit gaps approximately equal to one timestep for all covered locations.
 - Patrol deployments show longer revisit gaps, reflecting broader spatial exploration and reduced dwell over individual locations.
 - The percentage of revisits occurring within a fixed threshold (10 timesteps) remains high for patrol deployments, but consistently lower than static deployments, highlighting an explicit persistence–coverage tradeoff.
+These results confirm that persistence and cumulative coverage represent competing mission objectives rather than simultaneously optimizable outcomes.
 
 ---
 

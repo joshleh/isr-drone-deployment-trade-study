@@ -55,7 +55,7 @@ This simplified sensor model enables clear interpretation of coverage and persis
 ### 6. Deployment and Movement
 
 - Drone deployment strategies are predefined per scenario.
-- Drones follow deterministic movement or patrol patterns in the baseline model.
+- Drones follow predefined movement or patrol policies, which may include stochastic behavior.
 - Collision avoidance and deconfliction are assumed to be handled externally.
 - Launch, recovery, and transit delays are not explicitly modeled.
 
