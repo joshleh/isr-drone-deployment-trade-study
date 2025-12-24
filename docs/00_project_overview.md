@@ -76,22 +76,18 @@ It is not intended as a tactical or real-time command-and-control system.
 
 ### 8. Project Status
 
-At the current stage, the project includes:
-- Defined problem statement and assumptions
-- Structured experiments plan
-- Scaffolded results framework
-
-Simulation implementation and analysis are ongoing.
+The baseline simulation and initial trade study experiments have been implemented and executed. Results comparing static and patrol deployment strategies have been analyzed and documented. The project is now in a refinement and extension phase, focusing on additional metrics, alternative patrol policies, and performance optimization.
 
 ---
 
 ### 9. Next Steps
 
 Planned next steps include:
-- Implementation of the baseline simulation model
-- Execution of initial experiments
-- Population of results and insights
-- Evaluation of optimization-based extensions
+- Evaluation of alternative patrol policies that explicitly balance coverage and persistence objectives
+- Introduction of additional persistence-focused metrics and mission-specific thresholds
+- Sensitivity analysis with respect to mission duration and operational area size
+- Identification of Pareto-efficient deployment strategies across competing objectives
+- Performance optimization of simulation bottlenecks, including selective C++ acceleration of core sensing and coverage computations
 
 ---
 

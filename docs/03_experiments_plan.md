@@ -3,140 +3,149 @@
 
 ### 1. Objective
 
-The objective of this experiments plan is to define a structured approach for evaluating ISR drone deployment strategies under varying operational conditions. The experiments are designed to quantify tradeoffs between coverage, persistence, cost, utilization, and risk proxies across multiple scenarios.
+The objective of this experiments plan is to define a structured approach for evaluating ISR drone deployment strategies under varying operational conditions. The experiments are designed to quantify tradeoffs between coverage, persistence, cost, utilization, and operational behavior across multiple scenarios.
 
-This plan ensures that simulation results are comparable, reproducible, and decision-relevant.
+This document distinguishes between experiments that have been executed and analyzed, and extensions that are planned for future work.
 
 ---
+
+## Part I — Executed Experiments
 
 ### 2. Baseline Scenario
 
-The baseline scenario serves as a reference point for all comparisons.
+The baseline scenario serves as the reference point for all executed experiments.
 
 **Baseline characteristics:**
-- Fixed operational area with uniform importance
+- Fixed two-dimensional operational area
 - Homogeneous ISR drone fleet
 - Fixed mission duration
-- Deterministic deployment and patrol patterns
+- Static and patrol-based deployment strategies
 - Linear operational cost model
+- Full fleet availability over the mission horizon
 
-All experimental results are compared against this baseline to highlight relative performance.
+All executed experiments are compared against this baseline configuration.
 
 ---
 
-### 3. Experimental Factors
+### 3. Experimental Factors (Executed)
 
-The following factors are varied systematically across experiments:
+The following factors were varied systematically in executed experiments:
 
 #### 3.1 Fleet Size
 - Number of available ISR drones
-- Evaluated at low, medium, and high fleet sizes
+- Evaluated across low to high fleet sizes
 
 #### 3.2 Sensor Footprint
-- Sensor coverage radius or area
-- Represents different sensor configurations or altitudes
+- Sensor coverage radius
+- Represents alternative sensor capabilities or operating altitudes
 
-#### 3.3 Mission Duration
-- Total mission time horizon
-- Short, medium, and extended-duration missions
+#### 3.3 Deployment Strategy
+- Static loiter deployments
+- Patrol-based deployments using a predefined stochastic movement policy
 
-#### 3.4 Deployment Strategy
-- Static placement
-- Predefined patrol routes
-- Regional allocation strategies
-
-Each factor is varied independently in initial experiments to isolate its impact.
+Each factor was varied in a controlled manner to isolate its impact on performance metrics.
 
 ---
 
-### 4. Scenario Design
+### 4. Executed Scenarios
 
-Experiments are grouped into scenarios defined by a combination of experimental factors. Each scenario is defined in a configuration file to ensure reproducibility.
+Executed experiments include:
+- Static deployment sweeps across fleet size and sensor footprint
+- Patrol deployment sweeps across the same parameter space
+- Direct comparison of static versus patrol strategies under identical resource constraints
 
-Example scenario categories include:
-- Resource-constrained deployments
-- Coverage-prioritized deployments
-- Cost-minimized deployments
-- High-persistence mission requirements
+Each scenario was defined using configuration files to ensure reproducibility.
 
 ---
 
 ### 5. Simulation Runs
 
-For each scenario:
-- Multiple simulation runs are executed to account for variability introduced by initial conditions or randomized elements (if enabled).
-- Identical random seeds are used across strategies when applicable to ensure fair comparisons.
-- Results are aggregated across runs for reporting.
+For each executed scenario:
+- Multiple simulation runs were performed to account for stochastic variability
+- Controlled random seeds were used to ensure fair comparisons
+- Results were aggregated across runs for reporting and analysis
 
 ---
 
-### 6. Performance Metrics
+### 6. Performance Metrics (Executed)
 
-The following metrics are recorded for each experiment:
+The following metrics were computed for executed experiments:
 
-- Coverage over time
-- Average revisit rate
+- Cumulative coverage over the mission horizon
+- Revisit gap statistics (mean and tail behavior)
+- Persistence threshold score (percentage of revisits within a fixed timestep threshold)
 - Total operational cost
 - Fleet utilization
-- Risk proxy measures
 
-Metrics are computed at both the mission level and, where appropriate, at sub-region levels.
+Metrics were evaluated at the mission level and aggregated across runs.
 
 ---
 
 ### 7. Comparison Methodology
 
-Results are analyzed using:
+Executed results were analyzed using:
+- Parameter sweep comparison tables
+- Coverage–cost tradeoff plots
+- Strategy-level comparisons highlighting persistence versus spatial reach
+- Sensitivity observation across fleet size and sensor footprint
 
-- Direct metric comparison tables
-- Tradeoff curves (e.g., cost vs. coverage)
-- Dominance analysis to identify strategies that outperform others across multiple metrics
-- Sensitivity analysis with respect to key parameters
-
-No single metric is assumed to be dominant; decisions are informed by tradeoffs.
-
----
-
-### 8. Output Artifacts
-
-Each experiment produces the following outputs:
-
-- Structured result tables (CSV)
-- Summary plots and visualizations
-- Scenario-specific performance summaries
-
-All outputs are stored with timestamped identifiers to ensure traceability.
+The analysis emphasizes tradeoffs rather than optimization toward a single objective.
 
 ---
 
-### 9. Experiment Traceability
+## Part II — Planned Extensions
 
-Each experiment is associated with:
-- Scenario configuration file
-- Simulation parameters
-- Code version identifier
+### 8. Additional Experimental Factors (Planned)
 
-This enables full traceability from reported results back to assumptions and implementation details.
-
----
-
-### 10. Success Criteria
-
-The experiments are considered successful if they:
-
-- Clearly illustrate tradeoffs between competing objectives
-- Identify conditions under which certain deployment strategies are preferred
-- Provide actionable insights for ISR deployment planning
-- Support extensions toward optimization-based approaches
-
----
-
-### 11. Planned Extensions
-
-Future experimental extensions may include:
-- Optimization-based deployment strategies
-- Dynamic retasking during missions
+Future experiments may introduce:
+- Mission duration as an explicit experimental factor
+- Alternative operational area sizes and shapes
 - Region-weighted coverage priorities
-- Heterogeneous drone fleets
 
-These extensions will be evaluated relative to the baseline experiments defined in this plan.
+---
+
+### 9. Alternative Deployment Policies (Planned)
+
+Planned extensions include evaluation of alternative patrol policies, such as:
+- Structured sweep or sector-based patrols
+- Persistence-aware patrol policies
+- Hybrid static–patrol deployments
+
+These policies will be evaluated relative to the executed baseline strategies.
+
+---
+
+### 10. Optimization-Based Experiments (Planned)
+
+Future work may incorporate:
+- Optimization-based deployment strategies
+- Pareto frontier identification across coverage, persistence, and cost
+- Constraint-driven strategy selection based on mission priorities
+
+---
+
+### 11. Performance and Scalability Extensions (Planned)
+
+To support larger scenario sweeps, planned work includes:
+- Profiling and identification of simulation bottlenecks
+- Selective C++ acceleration of performance-critical components
+- Evaluation of scalability across larger grids and longer missions
+
+---
+
+### 12. Experiment Traceability
+
+All experiments, executed and planned, are designed to maintain:
+- Explicit configuration files
+- Traceability from results to assumptions
+- Reproducibility across code versions
+
+---
+
+### 13. Success Criteria
+
+The experimental program is considered successful if it:
+- Clearly illustrates tradeoffs between competing mission objectives
+- Distinguishes operational strengths and limitations of deployment strategies
+- Produces decision-relevant insights rather than purely technical metrics
+- Supports future extension toward optimization and performance scaling
