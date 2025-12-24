@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np
 
 from .scenario import Scenario, StrategySpec
-from .metrics import RunMetrics, compute_revisit_stats
+from .metrics import RunMetrics, summarize_revisit_gaps
 
 @dataclass
 class DroneState:
@@ -39,6 +39,10 @@ def run_simulation(
     ever_seen = np.zeros((H, W), dtype=bool)
     last_seen = np.full((H, W), -1, dtype=int)
     coverage_over_time = np.zeros(T, dtype=float)
+
+    # NEW: persistence bookkeeping (revisit gap samples)
+    revisit_gaps: list[int] = []
+    persistence_threshold_steps = 10  # baseline threshold (tunable later)
 
     # initialize drone states
     drones: List[DroneState] = []
@@ -96,14 +100,20 @@ def run_simulation(
                 x = cx + dx
                 y = cy + dy
                 if 0 <= x < W and 0 <= y < H:
+                    # NEW: if we have seen it before, record revisit gap
+                    prev = last_seen[y, x]
+                    if prev >= 0:
+                        revisit_gaps.append(t - prev)
+
                     ever_seen[y, x] = True
                     last_seen[y, x] = t
 
-        # coverage fraction at time t (ever-seen up to t)
         coverage_over_time[t] = float(np.mean(ever_seen))
 
     avg_coverage = float(np.mean(coverage_over_time))
-    revisit_mean, revisit_p90 = compute_revisit_stats(last_seen, T)
+
+    gaps = np.array(revisit_gaps, dtype=int)
+    gap_mean, gap_p90, pct_within = summarize_revisit_gaps(gaps, persistence_threshold_steps)
 
     total_cost = float(active_steps_total * scenario.fleet.cost_per_step)
     utilization = float(active_steps_total / (T * N))
@@ -111,8 +121,9 @@ def run_simulation(
     return RunMetrics(
         coverage_over_time=coverage_over_time,
         avg_coverage=avg_coverage,
-        revisit_time_mean=revisit_mean,
-        revisit_time_p90=revisit_p90,
+        revisit_gap_mean=gap_mean,
+        revisit_gap_p90=gap_p90,
+        pct_revisits_within_threshold=pct_within,
         total_cost=total_cost,
         utilization=utilization,
     )

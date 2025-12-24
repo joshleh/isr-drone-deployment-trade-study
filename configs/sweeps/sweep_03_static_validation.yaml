@@ -1,0 +1,15 @@
+run:
+  seed: 42
+  output_dir: "results/runs"
+
+base_config: "configs/base.yaml"
+
+sweep:
+  name: "sweep_03_static_validation"
+  num_runs_per_point: 3
+
+  factors:
+    fleet_sizes: [2, 4, 6, 8, 10]
+    sensor_radii: [2, 4, 6, 8]
+
+  strategy_type: "static"

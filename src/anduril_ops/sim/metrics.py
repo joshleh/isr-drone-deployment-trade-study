@@ -7,30 +7,36 @@ import numpy as np
 class RunMetrics:
     coverage_over_time: np.ndarray  # shape (T,)
     avg_coverage: float
-    revisit_time_mean: float
-    revisit_time_p90: float
+
+    # NEW: persistence metrics based on revisit gaps
+    revisit_gap_mean: float
+    revisit_gap_p90: float
+    pct_revisits_within_threshold: float
+
     total_cost: float
     utilization: float  # proxy: active_steps / (T * num_drones)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "avg_coverage": float(self.avg_coverage),
-            "revisit_time_mean": float(self.revisit_time_mean),
-            "revisit_time_p90": float(self.revisit_time_p90),
+            "revisit_gap_mean": float(self.revisit_gap_mean),
+            "revisit_gap_p90": float(self.revisit_gap_p90),
+            "pct_revisits_within_threshold": float(self.pct_revisits_within_threshold),
             "total_cost": float(self.total_cost),
             "utilization": float(self.utilization),
         }
 
-def compute_revisit_stats(last_seen: np.ndarray, T: int) -> tuple[float, float]:
+def summarize_revisit_gaps(gaps: np.ndarray, threshold_steps: int) -> tuple[float, float, float]:
     """
-    last_seen: int array (H,W) of last time index each cell was observed; -1 if never.
-    We'll compute revisit times using gaps for cells that were ever seen.
-    Baseline: approximate by treating 'time since last seen at end' as one sample.
+    gaps: array of revisit gaps (positive integers). Each sample corresponds to a cell being revisited.
+    threshold_steps: count revisits within this many steps as "good persistence".
     """
-    seen_mask = last_seen >= 0
-    if not np.any(seen_mask):
-        return float("inf"), float("inf")
+    if gaps.size == 0:
+        # No revisits occurred (e.g., extremely sparse coverage)
+        return float("inf"), float("inf"), 0.0
 
-    # time since last seen at end of simulation
-    gaps = (T - 1) - last_seen[seen_mask]
-    return float(np.mean(gaps)), float(np.percentile(gaps, 90))
+    mean_gap = float(np.mean(gaps))
+    p90_gap = float(np.percentile(gaps, 90))
+    pct_within = float(np.mean(gaps <= threshold_steps))
+
+    return mean_gap, p90_gap, pct_within

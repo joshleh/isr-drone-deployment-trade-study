@@ -166,12 +166,13 @@ def main() -> None:
     agg = (
         df.groupby(group_cols, as_index=False)
           .agg({
-              "avg_coverage": "mean",
-              "revisit_time_mean": "mean",
-              "revisit_time_p90": "mean",
-              "total_cost": "mean",
-              "utilization": "mean",
-          })
+                "avg_coverage": "mean",
+                "revisit_gap_mean": "mean",
+                "revisit_gap_p90": "mean",
+                "pct_revisits_within_threshold": "mean",
+                "total_cost": "mean",
+                "utilization": "mean",
+            })
           .sort_values(group_cols)
     )
     agg_path = sweep_dir / "sweep_results_agg.csv"
