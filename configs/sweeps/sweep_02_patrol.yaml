@@ -1,0 +1,15 @@
+run:
+  seed: 42
+  output_dir: "results/runs"
+
+base_config: "configs/base.yaml"
+
+sweep:
+  name: "sweep_02_patrol_vs_static"
+  num_runs_per_point: 5
+
+  factors:
+    fleet_sizes: [2, 4, 6, 8, 10]
+    sensor_radii: [2, 4, 6, 8]
+
+  strategy_type: "patrol"

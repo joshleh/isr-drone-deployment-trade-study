@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import argparse
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -84,7 +85,16 @@ def override_factors(base_cfg: dict, fleet_size: int, sensor_radius: int, strate
 
 
 def main() -> None:
-    sweep_cfg = load_yaml("configs/sweeps/sweep_01.yaml")
+    parser = argparse.ArgumentParser(description="Run parameter sweep for ISR trade study.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="configs/sweeps/sweep_01.yaml",
+        help="Path to sweep YAML config",
+    )
+    args = parser.parse_args()
+
+    sweep_cfg = load_yaml(args.config)
     base_cfg_path = sweep_cfg["base_config"]
     base_cfg = load_yaml(base_cfg_path)
 
