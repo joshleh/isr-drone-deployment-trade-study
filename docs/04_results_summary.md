@@ -33,6 +33,8 @@ These results confirm that persistence and cumulative coverage represent competi
 - Total operational cost scales linearly with fleet size and is independent of deployment strategy in the baseline model.
 - As a result, differences in coverage and persistence represent operational tradeoffs rather than cost artifacts.
 
+Utilization remained at 100% across all scenarios under baseline assumptions, indicating that observed differences in coverage and persistence are driven by deployment strategy rather than availability or endurance constraints.
+
 ---
 
 ### 5. Key Insights
