@@ -1,2 +1,5 @@
-# isr-drone-deployment-trade-study
-Scenario-based ISR drone deployment trade study analyzing coverage, persistence, cost, and operational constraints.
+# ISR Drone Deployment Trade Study
+
+Scenario-based operations analysis of ISR drone fleet deployment under cost, coverage, and operational constraints.
+
+More documentation coming soon.
