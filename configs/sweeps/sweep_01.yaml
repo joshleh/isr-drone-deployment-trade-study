@@ -1,0 +1,17 @@
+run:
+  seed: 42
+  output_dir: "results/runs"
+
+base_config: "configs/base.yaml"
+
+sweep:
+  name: "sweep_01_fleet_vs_radius"
+  num_runs_per_point: 5
+
+  factors:
+    fleet_sizes: [2, 4, 6, 8, 10]
+    sensor_radii: [2, 4, 6, 8]
+
+  # Optional: override strategy type for the sweep
+  # If omitted, uses strategy from base_config.
+  # strategy_type: "static"   # or "patrol"
