@@ -1,0 +1,32 @@
+run:
+  seed: 42
+  output_dir: "results/runs"
+
+scenario:
+  name: "baseline_grid"
+  grid:
+    width: 60
+    height: 60
+  time:
+    steps: 300
+
+fleet:
+  num_drones: 6
+  sensor_radius: 5          # in grid cells
+  endurance_steps: 300      # drone available for whole run in baseline
+  cost_per_step: 1.0        # arbitrary units
+
+strategy:
+  type: "static"            # "static" or "patrol"
+  static:
+    # loiter points (x, y) in grid coordinates
+    points:
+      - [10, 10]
+      - [10, 50]
+      - [50, 10]
+      - [50, 50]
+      - [30, 15]
+      - [30, 45]
+  patrol:
+    step_size: 1            # cells per time step
+    turn_prob: 0.25         # random turn probability
