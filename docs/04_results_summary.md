@@ -1,110 +1,64 @@
 # ISR Drone Deployment Trade Study  
 ## Results Summary
 
-### 1. Purpose
+### 1. Executive Summary
 
-This document summarizes the key findings from the ISR drone deployment trade study experiments. It is intended to present high-level results, tradeoffs, and insights derived from the simulation and analysis, without delving into implementation details.
-
-Detailed methodology, assumptions, and experimental design are documented separately.
+This trade study evaluated alternative ISR drone deployment strategies under varying fleet sizes and sensor footprints, with a focus on coverage, cost, utilization, and persistence. Results show clear tradeoffs between static and patrol-based deployments. Static strategies provide strong persistence over fixed areas but limited spatial reach, while patrol strategies significantly expand cumulative coverage at the expense of tighter revisit behavior.
 
 ---
 
-### 2. Executive Summary
+### 2. Coverage–Cost Tradeoffs
 
-> **[To be completed after experiments are run]**
-
-This section will provide a concise overview of:
-- Primary findings
-- Dominant deployment strategies
-- Key tradeoffs observed across scenarios
-- Implications for operational decision-making
+- Increasing sensor footprint yields larger marginal coverage gains than increasing fleet size across both deployment strategies.
+- Static deployments exhibit a lower coverage ceiling due to fixed spatial placement, even as fleet size increases.
+- Patrol deployments achieve substantially higher cumulative coverage by sweeping across the operational area over time, particularly at larger sensor radii.
+- Coverage gains exhibit diminishing returns at higher fleet sizes and larger sensor footprints, indicating potential inefficiencies beyond certain resource levels.
 
 ---
 
-### 3. Baseline Results
+### 3. Persistence and Revisit Behavior
 
-> **[Placeholder]**
-
-This section will summarize performance metrics for the baseline deployment scenario, serving as a reference point for comparison with alternative strategies.
-
-Planned content:
-- Summary table of baseline KPIs
-- Coverage and persistence plots
-- Cost and utilization metrics
+- Persistence was evaluated using revisit gap metrics that measure the time between consecutive observations of the same location.
+- Static deployments demonstrate near-perfect persistence, with mean and 90th-percentile revisit gaps approximately equal to one timestep for all covered locations.
+- Patrol deployments show longer revisit gaps, reflecting broader spatial exploration and reduced dwell over individual locations.
+- The percentage of revisits occurring within a fixed threshold (10 timesteps) remains high for patrol deployments, but consistently lower than static deployments, highlighting an explicit persistence–coverage tradeoff.
 
 ---
 
-### 4. Comparative Analysis
+### 4. Utilization and Cost Structure
 
-> **[Placeholder]**
-
-This section will compare alternative deployment strategies against the baseline.
-
-Planned content:
-- Side-by-side metric comparison tables
-- Tradeoff curves (e.g., cost vs. coverage)
-- Identification of strategies that dominate across multiple metrics
+- Under baseline assumptions, fleet utilization remains at 100% across all scenarios, confirming that observed differences are driven by deployment strategy rather than availability or endurance constraints.
+- Total operational cost scales linearly with fleet size and is independent of deployment strategy in the baseline model.
+- As a result, differences in coverage and persistence represent operational tradeoffs rather than cost artifacts.
 
 ---
 
-### 5. Scenario-Specific Findings
+### 5. Key Insights
 
-> **[Placeholder]**
-
-This section will highlight insights that emerge under specific operational scenarios, such as:
-- Resource-constrained environments
-- High-persistence mission requirements
-- Cost-limited deployments
+- **Static deployments** are well-suited for missions prioritizing persistent surveillance over known high-value areas.
+- **Patrol deployments** are more effective for missions requiring broad situational awareness or area exploration.
+- Sensor capability improvements can outperform fleet expansion in improving overall coverage.
+- Optimal deployment strategies depend on mission priorities, particularly the relative importance of persistence versus spatial reach.
 
 ---
 
-### 6. Sensitivity Analysis
+### 6. Limitations
 
-> **[Placeholder]**
-
-This section will summarize how results change in response to key parameters, including:
-- Fleet size
-- Sensor footprint
-- Mission duration
-- Cost assumptions
+- Coverage is defined as cumulative area observed at least once during the mission; instantaneous coverage is not explicitly optimized.
+- Patrol behavior is modeled using a simplified random-walk policy and does not represent adaptive or task-driven routing.
+- Environmental factors, adversarial behavior, and platform heterogeneity are not included in the baseline analysis.
 
 ---
 
-### 7. Key Insights and Implications
+### 7. Recommendations for Future Work
 
-> **[Placeholder]**
-
-This section will distill the most important takeaways from the analysis, focusing on:
-- Practical implications for ISR deployment planning
-- Conditions under which certain strategies are preferred
-- Tradeoffs that decision-makers must consider
+- Introduce instantaneous coverage and time-weighted coverage metrics to complement cumulative coverage.
+- Evaluate alternative patrol policies that explicitly optimize persistence or revisit constraints.
+- Extend the model to heterogeneous fleets with varied endurance, cost, and sensor capabilities.
+- Incorporate optimization-based deployment strategies to identify Pareto-optimal solutions across mission objectives.
 
 ---
 
-### 8. Limitations
+### 8. Conclusion
 
-> **[Placeholder]**
-
-This section will acknowledge limitations observed during analysis, including:
-- Modeling simplifications
-- Data or parameter uncertainty
-- Scenarios not covered by the current study
-
----
-
-### 9. Recommendations for Future Work
-
-> **[Placeholder]**
-
-This section will outline recommended next steps, such as:
-- Model extensions
-- Additional experiments
-- Integration with optimization or real-time planning tools
-
----
-
-### 10. Conclusion
-
-> **[Placeholder]**
-
-This section will provide a concise concluding statement summarizing the value and outcomes of the trade study.
+This study demonstrates that ISR drone deployment decisions involve clear and quantifiable tradeoffs between coverage, persistence, and cost. By explicitly modeling these tradeoffs, the analysis provides a transparent framework for evaluating deployment strategies under different mission priorities and operational constraints.
