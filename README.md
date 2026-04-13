@@ -152,7 +152,7 @@ Do not change the machine-wide default Python just for this repo. A project-spec
    `make serve-demo PYTHON=/path/to/python3.10+`
 
 8. Open the local demo viewer
-   After `make live-demo`, start `make serve-demo` and visit `http://127.0.0.1:8000/docs/live_demo/index.html`
+   After `make live-demo`, start `make serve-demo` and visit `http://127.0.0.1:8010/docs/live_demo/index.html`
 
 ---
 

@@ -1,5 +1,6 @@
 PYTHON ?= python3
 MPLCONFIGDIR ?= /tmp/mpl
+DEMO_PORT ?= 8010
 
 .PHONY: install test demo policy sweep export live-demo serve-demo
 
@@ -25,4 +26,4 @@ live-demo:
 	$(PYTHON) scripts/build_live_demo.py
 
 serve-demo:
-	$(PYTHON) -m http.server 8000
+	$(PYTHON) -m http.server $(DEMO_PORT) --bind 127.0.0.1

@@ -678,7 +678,7 @@ def build_live_demo_site(
 make serve-demo
 
 # then open
-http://127.0.0.1:8000/docs/live_demo/index.html</code></pre>
+http://127.0.0.1:8010/docs/live_demo/index.html</code></pre>
         </article>
         <article class="command-panel">
           <h3>Role alignment</h3>
