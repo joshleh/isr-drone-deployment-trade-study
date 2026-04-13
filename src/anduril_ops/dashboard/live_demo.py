@@ -597,7 +597,7 @@ def build_live_demo_site(
         </div>
       </div>
       <aside class="hero-board">
-        <div class="board-label">Why this reads differently than Aerotrack</div>
+        <div class="board-label">What this project emphasizes</div>
         <ul class="board-list">
           <li>Simulation and trade-study first, not an ML product shell.</li>
           <li>Dynamic tasking, heterogeneous fleets, and policy evaluation instead of API-driven inference.</li>

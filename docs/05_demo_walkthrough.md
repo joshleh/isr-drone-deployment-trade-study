@@ -1,6 +1,6 @@
 # Demo Walkthrough
 
-This repository now includes a one-command demo scenario that is intentionally different from the `aerotrack` project. Instead of serving an ML API, the demo behaves like a compact decision-support artifact: it runs a priority-weighted trade study, exports comparison figures, and writes a short analyst brief.
+This repository now includes a one-command demo scenario that behaves like a compact decision-support artifact: it runs a priority-weighted trade study, exports comparison figures, and writes a short analyst brief.
 
 ## Command
 

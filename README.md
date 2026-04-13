@@ -4,7 +4,7 @@ Scenario-based operations analysis of ISR drone fleet deployment under cost, cov
 
 This project evaluates tradeoffs between alternative ISR drone deployment strategies using simulation, parameter sweeps, and decision-relevant metrics. The analysis is structured as a formal trade study, emphasizing transparency, reproducibility, and operational insight rather than model complexity.
 
-Unlike `aerotrack`, this repository is not trying to look like an end-to-end ML product. It is intentionally positioned as a simulation and decision-support project: scenario design, KPI engineering, sweep analysis, and analyst-style reporting.
+This repository is intentionally positioned as a simulation and decision-support project: scenario design, KPI engineering, sweep analysis, and analyst-style reporting.
 
 The project now also includes:
 
@@ -180,7 +180,7 @@ This project fits most naturally for:
 - **Data Scientist**: experiment design, metric engineering, simulation-backed analysis, priority-weighted evaluation, policy scoring
 - **Data Engineer**: reproducible configs, sweep pipelines, DuckDB and Parquet persistence, dashboard-oriented result generation
 
-It is less of a direct **MLE** repo than `aerotrack`, but it still becomes MLE-adjacent when you frame it as the evaluation layer for planners, routing policies, or autonomy systems.
+It is less of a direct **MLE** repo and more of an evaluation layer for planners, routing policies, and autonomy systems.
 
 The new `priority_patrol` comparison makes that framing much stronger because the repo now evaluates alternative policies under dynamic demand rather than only measuring static geometry.
 The added `greedy_patrol` baseline also makes the comparison feel more serious and less like a hand-picked heuristic demo.
@@ -189,7 +189,7 @@ The added `greedy_patrol` baseline also makes the comparison feel more serious a
 
 ## How To Expand It
 
-Strong next steps that would deepen the project without turning it into a copy of `aerotrack`:
+Strong next steps that would deepen the project while keeping it focused on simulation and decision support:
 
 - add structured patrol policies instead of only stochastic patrol
 - introduce heterogeneous fleets with different endurance, cost, and sensor quality
