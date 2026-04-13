@@ -208,3 +208,6 @@ __marimo__/
 
 # Simulation outputs
 results/
+
+# Generated timestamped sweep figures; keep stable showcase figures instead.
+docs/figures/sweep_*_20*.png

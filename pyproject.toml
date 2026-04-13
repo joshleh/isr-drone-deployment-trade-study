@@ -8,6 +8,7 @@ dependencies = [
   "pandas>=2.0",
   "pyyaml>=6.0",
   "matplotlib>=3.7",
+  "duckdb>=1.0",
 ]
 
 [tool.setuptools.packages.find]

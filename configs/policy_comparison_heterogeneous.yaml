@@ -1,0 +1,28 @@
+run:
+  seed: 707
+  output_dir: "results/policy"
+
+base_config: "configs/advanced_ops_base.yaml"
+
+comparison:
+  name: "policy_comparison_dynamic_heterogeneous"
+  num_runs_per_strategy: 5
+  strategies:
+    - "static"
+    - "patrol"
+    - "greedy_patrol"
+    - "priority_patrol"
+
+dashboard:
+  title: "Dynamic ISR Policy Comparison"
+  subtitle: "Heterogeneous fleet comparison across static basing, random patrol, and task-aware patrol under changing mission demand."
+
+report:
+  narrative: "A mixed fleet of long-endurance sentinels and faster scout drones must monitor a border corridor, protect a logistics hub, and respond to time-varying surveillance spikes."
+  mission_fit_weights:
+    weighted_coverage: 0.08
+    task_service: 0.38
+    task_completion: 0.18
+    response_speed: 0.22
+    persistence: 0.08
+    efficiency: 0.06

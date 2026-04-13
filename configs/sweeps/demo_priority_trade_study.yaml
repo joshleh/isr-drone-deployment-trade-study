@@ -1,0 +1,21 @@
+run:
+  seed: 314
+  output_dir: "results/demo"
+
+base_config: "configs/demo_priority.yaml"
+
+sweep:
+  name: "demo_priority_trade_study"
+  num_runs_per_point: 4
+  factors:
+    fleet_sizes: [3, 6, 9]
+    sensor_radii: [3, 5, 7]
+  strategy_types: ["static", "patrol"]
+
+demo:
+  narrative: "Persistent monitoring trade study with a border corridor, a likely ingress lane, and a logistics hub that carries the highest mission weight."
+  mission_fit_weights:
+    weighted_coverage: 0.45
+    priority_persistence: 0.30
+    efficiency: 0.15
+    low_redundancy: 0.10
