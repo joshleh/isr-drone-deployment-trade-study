@@ -3,85 +3,18 @@ from __future__ import annotations
 import time
 import argparse
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import pandas as pd
-import yaml
 
+from _bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
+
+from anduril_ops.analytics.storage import persist_tables_to_duckdb
+from anduril_ops.io.config import build_objects_from_cfg, load_yaml, override_factors
 from anduril_ops.utils.seed import make_rng
-from anduril_ops.sim.scenario import Scenario, GridSpec, TimeSpec, FleetSpec, StrategySpec
 from anduril_ops.sim.monte_carlo import run_simulation
-
-
-def load_yaml(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-def build_objects_from_cfg(cfg: dict) -> Tuple[Scenario, StrategySpec, int, str]:
-    """Same idea as run_pipeline.py, but kept local so sweep is self-contained."""
-    seed = int(cfg["run"]["seed"])
-    out_root = str(cfg["run"]["output_dir"])
-
-    sc = cfg["scenario"]
-    fl = cfg["fleet"]
-    st = cfg["strategy"]
-
-    scenario = Scenario(
-        name=str(sc["name"]),
-        grid=GridSpec(width=int(sc["grid"]["width"]), height=int(sc["grid"]["height"])),
-        time=TimeSpec(steps=int(sc["time"]["steps"])),
-        fleet=FleetSpec(
-            num_drones=int(fl["num_drones"]),
-            sensor_radius=int(fl["sensor_radius"]),
-            endurance_steps=int(fl["endurance_steps"]),
-            cost_per_step=float(fl["cost_per_step"]),
-        ),
-    )
-
-    if st["type"] == "static":
-        pts = [tuple(map(int, p)) for p in st["static"]["points"]]
-        strategy = StrategySpec(type="static", static_points=pts)
-    elif st["type"] == "patrol":
-        strategy = StrategySpec(
-            type="patrol",
-            patrol_step_size=int(st["patrol"]["step_size"]),
-            patrol_turn_prob=float(st["patrol"]["turn_prob"]),
-        )
-    else:
-        raise ValueError(f"Unknown strategy.type: {st['type']}")
-
-    return scenario, strategy, seed, out_root
-
-
-def override_factors(base_cfg: dict, fleet_size: int, sensor_radius: int, strategy_type: str | None) -> dict:
-    cfg = dict(base_cfg)  # shallow copy is ok; we overwrite nested keys below carefully
-
-    # Ensure nested dicts exist
-    cfg["fleet"] = dict(base_cfg["fleet"])
-    cfg["strategy"] = dict(base_cfg["strategy"])
-
-    cfg["fleet"]["num_drones"] = int(fleet_size)
-    cfg["fleet"]["sensor_radius"] = int(sensor_radius)
-
-    if strategy_type is not None:
-        cfg["strategy"]["type"] = strategy_type
-
-    # If static strategy is used and points are fewer than num_drones, repeat points (cyclic).
-    # This keeps sweep from failing due to config mismatch.
-    if cfg["strategy"]["type"] == "static":
-        cfg["strategy"]["static"] = dict(base_cfg["strategy"]["static"])
-        pts = [tuple(p) for p in cfg["strategy"]["static"]["points"]]
-        if len(pts) == 0:
-            raise ValueError("Static strategy requires at least 1 loiter point.")
-        if len(pts) < fleet_size:
-            # repeat points cyclically
-            repeated = [pts[i % len(pts)] for i in range(fleet_size)]
-            cfg["strategy"]["static"]["points"] = [list(p) for p in repeated]
-        else:
-            cfg["strategy"]["static"]["points"] = [list(p) for p in pts]
-
-    return cfg
 
 
 def main() -> None:
@@ -104,7 +37,12 @@ def main() -> None:
     fleet_sizes = list(sweep_cfg["sweep"]["factors"]["fleet_sizes"])
     sensor_radii = list(sweep_cfg["sweep"]["factors"]["sensor_radii"])
 
-    strategy_override = sweep_cfg["sweep"].get("strategy_type", None)
+    strategy_types = sweep_cfg["sweep"].get("strategy_types")
+    if strategy_types is None:
+        strategy_override = sweep_cfg["sweep"].get("strategy_type", None)
+        strategy_types = [strategy_override]
+    else:
+        strategy_types = [None if s is None else str(s) for s in strategy_types]
 
     # Use base run settings as default, but allow sweep to override output directory/seed
     base_cfg["run"] = dict(base_cfg.get("run", {}))
@@ -118,42 +56,48 @@ def main() -> None:
 
     rows: list[Dict[str, Any]] = []
 
-    total_jobs = len(fleet_sizes) * len(sensor_radii) * runs_per_point
+    total_jobs = len(strategy_types) * len(fleet_sizes) * len(sensor_radii) * runs_per_point
     job_idx = 0
 
-    for n in fleet_sizes:
-        for r in sensor_radii:
-            for k in range(runs_per_point):
-                job_idx += 1
-                seed = int(base_cfg["run"]["seed"]) + (n * 10000) + (r * 100) + k
-                cfg_point = override_factors(base_cfg, fleet_size=n, sensor_radius=r, strategy_type=strategy_override)
-                cfg_point["run"]["seed"] = seed
+    for strategy_override in strategy_types:
+        for n in fleet_sizes:
+            for r in sensor_radii:
+                for k in range(runs_per_point):
+                    job_idx += 1
+                    strategy_offset = sum(ord(ch) for ch in (strategy_override or "base"))
+                    seed = int(base_cfg["run"]["seed"]) + strategy_offset + (n * 10000) + (r * 100) + k
+                    cfg_point = override_factors(base_cfg, fleet_size=n, sensor_radius=r, strategy_type=strategy_override)
+                    cfg_point["run"]["seed"] = seed
 
-                scenario, strategy, seed_used, _ = build_objects_from_cfg(cfg_point)
-                rng = make_rng(seed_used)
+                    scenario, strategy, seed_used, _ = build_objects_from_cfg(cfg_point)
+                    rng = make_rng(seed_used)
 
-                metrics = run_simulation(scenario, strategy, rng)
-                rec = metrics.to_dict()
+                    metrics = run_simulation(scenario, strategy, rng)
+                    rec = metrics.to_dict()
 
-                rec.update({
-                    "sweep": sweep_name,
-                    "scenario": scenario.name,
-                    "strategy": strategy.type,
-                    "seed": seed_used,
-                    "steps": scenario.time.steps,
-                    "grid_w": scenario.grid.width,
-                    "grid_h": scenario.grid.height,
-                    "num_drones": scenario.fleet.num_drones,
-                    "sensor_radius": scenario.fleet.sensor_radius,
-                    "endurance_steps": scenario.fleet.endurance_steps,
-                    "cost_per_step": scenario.fleet.cost_per_step,
-                    "run_index": k,
-                })
+                    rec.update({
+                        "sweep": sweep_name,
+                        "scenario": scenario.name,
+                        "strategy": strategy.type,
+                        "seed": seed_used,
+                        "steps": scenario.time.steps,
+                        "grid_w": scenario.grid.width,
+                        "grid_h": scenario.grid.height,
+                        "num_drones": scenario.fleet.total_drones,
+                        "sensor_radius": scenario.fleet.sensor_radius,
+                        "endurance_steps": scenario.fleet.endurance_steps,
+                        "cost_per_step": scenario.fleet.cost_per_step,
+                        "fleet_mix": "mixed" if scenario.fleet.is_heterogeneous else "homogeneous",
+                        "run_index": k,
+                    })
 
-                rows.append(rec)
+                    rows.append(rec)
 
-                if job_idx % 10 == 0 or job_idx == total_jobs:
-                    print(f"[{job_idx}/{total_jobs}] n={n}, r={r}, run={k} -> avg_cov={rec['avg_coverage']:.3f}")
+                    if job_idx % 10 == 0 or job_idx == total_jobs:
+                        print(
+                            f"[{job_idx}/{total_jobs}] strategy={strategy.type}, "
+                            f"n={n}, r={r}, run={k} -> final_cov={rec['final_coverage']:.3f}"
+                        )
 
     df = pd.DataFrame(rows)
 
@@ -167,16 +111,38 @@ def main() -> None:
         df.groupby(group_cols, as_index=False)
           .agg({
                 "avg_coverage": "mean",
+                "final_coverage": "mean",
+                "avg_weighted_coverage": "mean",
+                "final_weighted_coverage": "mean",
+                "priority_cell_coverage": "mean",
                 "revisit_gap_mean": "mean",
                 "revisit_gap_p90": "mean",
                 "pct_revisits_within_threshold": "mean",
+                "priority_revisit_gap_mean": "mean",
+                "priority_revisit_gap_p90": "mean",
+                "pct_priority_revisits_within_threshold": "mean",
+                "avg_task_service_rate": "mean",
+                "task_completion_rate": "mean",
+                "mean_task_response_time": "mean",
+                "p90_task_response_time": "mean",
+                "pct_tasks_responded_within_threshold": "mean",
                 "total_cost": "mean",
                 "utilization": "mean",
+                "redundancy_ratio": "mean",
+                "coverage_efficiency": "mean",
             })
           .sort_values(group_cols)
     )
     agg_path = sweep_dir / "sweep_results_agg.csv"
     agg.to_csv(agg_path, index=False)
+    persist_tables_to_duckdb(
+        output_dir=sweep_dir,
+        duckdb_path=sweep_dir / "analysis.duckdb",
+        tables={
+            "sweep_results_raw": df,
+            "sweep_results_agg": agg,
+        },
+    )
 
     print(f"\nSaved sweep outputs to:\n- {raw_path}\n- {agg_path}\n")
 

@@ -1,0 +1,98 @@
+run:
+  seed: 707
+  output_dir: "results/policy"
+
+scenario:
+  name: "dynamic_border_watch"
+  grid:
+    width: 90
+    height: 60
+  time:
+    steps: 240
+  priority_zones:
+    - name: "border_corridor"
+      x_min: 3
+      x_max: 18
+      y_min: 0
+      y_max: 59
+      weight: 2.0
+    - name: "crossing_lane"
+      x_min: 20
+      x_max: 54
+      y_min: 23
+      y_max: 37
+      weight: 3.0
+    - name: "logistics_hub"
+      x_min: 60
+      x_max: 82
+      y_min: 16
+      y_max: 42
+      weight: 4.0
+  dynamic_tasks:
+    - name: "north_crossing_spike"
+      start_step: 25
+      end_step: 70
+      x_min: 18
+      x_max: 28
+      y_min: 8
+      y_max: 18
+      priority: 3.5
+    - name: "central_convoy_track"
+      start_step: 72
+      end_step: 118
+      x_min: 34
+      x_max: 48
+      y_min: 26
+      y_max: 35
+      priority: 4.0
+    - name: "hub_anomaly"
+      start_step: 110
+      end_step: 170
+      x_min: 62
+      x_max: 76
+      y_min: 18
+      y_max: 34
+      priority: 5.0
+    - name: "southern_border_retask"
+      start_step: 150
+      end_step: 220
+      x_min: 14
+      x_max: 30
+      y_min: 40
+      y_max: 54
+      priority: 3.0
+
+fleet:
+  platforms:
+    - name: "sentinel"
+      count: 2
+      sensor_radius: 7
+      endurance_steps: 240
+      cost_per_step: 1.6
+      cruise_step_size: 1
+    - name: "scout"
+      count: 4
+      sensor_radius: 4
+      endurance_steps: 180
+      cost_per_step: 0.9
+      cruise_step_size: 2
+
+strategy:
+  type: "static"
+  static:
+    point_mode: "explicit"
+    points:
+      - [11, 10]
+      - [11, 50]
+      - [18, 30]
+      - [58, 12]
+      - [72, 30]
+      - [58, 48]
+  patrol:
+    step_size: 1
+    turn_prob: 0.18
+    task_priority_bias: 3.0
+    priority_zone_bias: 1.8
+    exploration_bias: 0.5
+    target_commitment_steps: 5
+    congestion_penalty: 0.4

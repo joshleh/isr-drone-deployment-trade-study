@@ -1,0 +1,51 @@
+run:
+  seed: 314
+  output_dir: "results/demo"
+
+scenario:
+  name: "priority_corridor_demo"
+  grid:
+    width: 80
+    height: 60
+  time:
+    steps: 240
+  priority_zones:
+    - name: "border_corridor"
+      x_min: 4
+      x_max: 16
+      y_min: 0
+      y_max: 59
+      weight: 2.0
+    - name: "ingress_lane"
+      x_min: 16
+      x_max: 54
+      y_min: 24
+      y_max: 36
+      weight: 3.0
+    - name: "logistics_hub"
+      x_min: 54
+      x_max: 72
+      y_min: 18
+      y_max: 40
+      weight: 4.0
+
+fleet:
+  num_drones: 6
+  sensor_radius: 5
+  endurance_steps: 240
+  cost_per_step: 1.0
+
+strategy:
+  type: "static"
+  static:
+    point_mode: "explicit"
+    points:
+      - [10, 10]
+      - [10, 50]
+      - [28, 30]
+      - [46, 30]
+      - [62, 22]
+      - [62, 36]
+  patrol:
+    step_size: 2
+    turn_prob: 0.2

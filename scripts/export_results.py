@@ -4,17 +4,23 @@ import argparse
 from pathlib import Path
 import pandas as pd
 
+from _bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
+
 from anduril_ops.viz.plots import (
     plot_coverage_heatmap,
+    plot_coverage_efficiency_by_fleet,
     plot_cost_vs_coverage,
-    plot_utilization_by_fleet,
+    plot_priority_vs_global_coverage,
+    plot_redundancy_vs_coverage,
 )
 
 
 def find_latest_sweep_agg(results_root: Path, prefix: str = "sweep_") -> Path:
     """
     Find the most recent sweep folder containing sweep_results_agg.csv.
-    Assumes folders are timestamped (lexicographically sortable).
+    Uses filesystem modification time so older sweep names do not outrank newer runs.
     """
     candidates = []
     if not results_root.exists():
@@ -29,7 +35,7 @@ def find_latest_sweep_agg(results_root: Path, prefix: str = "sweep_") -> Path:
     if not candidates:
         raise FileNotFoundError(f"No sweep_results_agg.csv found under: {results_root}")
 
-    return sorted(candidates)[-1]
+    return max(candidates, key=lambda path: path.stat().st_mtime)
 
 
 def main() -> None:
@@ -59,6 +65,8 @@ def main() -> None:
         agg,
         out_path=docs_figures / f"{base}_coverage_heatmap.png",
         strategy=args.strategy,
+        value_col="final_coverage",
+        title="Final Coverage Heatmap",
     )
 
     plot_cost_vs_coverage(
@@ -67,9 +75,21 @@ def main() -> None:
         strategy=args.strategy,
     )
 
-    plot_utilization_by_fleet(
+    plot_coverage_efficiency_by_fleet(
         agg,
-        out_path=docs_figures / f"{base}_utilization_vs_fleet.png",
+        out_path=docs_figures / f"{base}_coverage_efficiency_vs_fleet.png",
+        strategy=args.strategy,
+    )
+
+    plot_redundancy_vs_coverage(
+        agg,
+        out_path=docs_figures / f"{base}_redundancy_vs_coverage.png",
+        strategy=args.strategy,
+    )
+
+    plot_priority_vs_global_coverage(
+        agg,
+        out_path=docs_figures / f"{base}_priority_vs_global_coverage.png",
         strategy=args.strategy,
     )
 
