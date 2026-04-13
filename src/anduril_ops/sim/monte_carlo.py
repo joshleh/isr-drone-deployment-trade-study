@@ -86,6 +86,14 @@ def _mask_centroid(mask: np.ndarray) -> tuple[int, int]:
     return int(round(np.mean(xs))), int(round(np.mean(ys)))
 
 
+def _mean_mask_age(mask: np.ndarray, last_seen: np.ndarray, t: int) -> float:
+    seen_steps = last_seen[mask]
+    if seen_steps.size == 0:
+        return float(t + 1)
+    ages = np.where(seen_steps < 0, t + 1, t - seen_steps)
+    return float(np.mean(ages))
+
+
 def _move_toward(
     drone: DroneState,
     target_x: int,
@@ -219,14 +227,16 @@ def _candidate_score(
     if strategy.type == "priority_patrol":
         if candidate.kind == "task":
             if drone.platform_name == "scout":
-                platform_fit *= 1.35
+                platform_fit *= 1.42
             elif drone.platform_name == "sentinel":
-                platform_fit *= 0.82
+                platform_fit *= 0.72
         elif candidate.kind == "priority_zone":
             if drone.platform_name == "sentinel":
-                platform_fit *= 1.3
+                platform_fit *= 1.48
             elif drone.platform_name == "scout":
-                platform_fit *= 0.82
+                platform_fit *= 0.74
+        elif candidate.kind == "explore" and drone.platform_name == "scout":
+            platform_fit *= 1.08
 
     return kind_bias * candidate.utility * platform_fit / (1.0 + dist)
 
@@ -235,6 +245,7 @@ def _build_candidate_targets(
     task_records: Sequence[dict],
     priority_targets: Sequence[tuple[np.ndarray, tuple[int, int], float]],
     ever_seen: np.ndarray,
+    last_seen: np.ndarray,
     t: int,
     strategy: StrategySpec,
     rng: np.random.Generator,
@@ -246,9 +257,15 @@ def _build_candidate_targets(
         if not (task.start_step <= t < task.end_step):
             continue
         task_seen_ratio = float(np.mean(ever_seen[record["mask"]]))
-        urgency_boost = 1.4 if record["response_time"] is None else 1.0
+        age_factor = min(1.0, _mean_mask_age(record["mask"], last_seen, t) / max(1, t + 1))
+        urgency_boost = 1.55 if record["response_time"] is None else 1.0
         cx, cy = record["centroid"]
-        utility = task.priority * urgency_boost * (1.0 - 0.5 * task_seen_ratio)
+        utility = (
+            task.priority
+            * urgency_boost
+            * (0.8 + 0.9 * age_factor)
+            * max(0.25, 1.0 - 0.4 * task_seen_ratio)
+        )
         capacity = 2 if task.priority >= 4.0 else 1
         candidates.append(
             CandidateTarget(
@@ -261,14 +278,15 @@ def _build_candidate_targets(
         )
 
     for idx, (mask, centroid, weight) in enumerate(priority_targets):
-        deficit = 1.0 - float(np.mean(ever_seen[mask]))
+        seen_ratio = float(np.mean(ever_seen[mask]))
+        age_factor = min(1.0, _mean_mask_age(mask, last_seen, t) / max(1, t + 1))
         candidates.append(
             CandidateTarget(
                 key=f"zone:{idx}",
                 kind="priority_zone",
                 centroid=centroid,
-                utility=weight * max(deficit, 0.05),
-                capacity=1,
+                utility=weight * max(0.18, (0.35 * (1.0 - seen_ratio)) + (0.65 * age_factor)),
+                capacity=2 if weight >= 3.0 else 1,
             )
         )
 
@@ -312,8 +330,9 @@ def _assign_targets(
             if candidate.kind == "explore":
                 continue
             if active_task_exists and candidate.kind != "task":
-                continue
-            if candidate.kind == "priority_zone" and drone.platform_name != "sentinel":
+                if not (candidate.kind == "priority_zone" and drone.platform_name == "sentinel"):
+                    continue
+            if candidate.kind == "priority_zone" and drone.platform_name not in {"sentinel", "homogeneous"}:
                 continue
             if used_capacity[candidate.key] >= candidate.capacity:
                 continue
@@ -326,6 +345,11 @@ def _assign_targets(
         drone = drones[idx]
         for candidate in candidates:
             score = _candidate_score(drone, candidate, strategy)
+            if mode == "priority_patrol":
+                if active_task_exists and drone.platform_name == "sentinel" and candidate.kind == "task":
+                    score *= 0.72
+                if active_task_exists and drone.platform_name == "scout" and candidate.kind == "priority_zone":
+                    score *= 0.78
             if mode == "priority_patrol" and candidate.key == drone.target_key:
                 score *= 1.2
             proposals.append((score, idx, candidate.key))
@@ -404,6 +428,7 @@ def run_simulation(
                 task_records=task_records,
                 priority_targets=priority_targets,
                 ever_seen=ever_seen,
+                last_seen=last_seen,
                 t=t,
                 strategy=strategy,
                 rng=rng,

@@ -148,6 +148,11 @@ Do not change the machine-wide default Python just for this repo. A project-spec
    `make test`
    `make demo PYTHON=/path/to/python3.10+`
    `make policy PYTHON=/path/to/python3.10+`
+   `make live-demo PYTHON=/path/to/python3.10+`
+   `make serve-demo PYTHON=/path/to/python3.10+`
+
+8. Open the local demo viewer
+   After `make live-demo`, start `make serve-demo` and visit `http://127.0.0.1:8000/docs/live_demo/index.html`
 
 ---
 
@@ -163,6 +168,7 @@ Detailed project documentation is provided in the `docs/` directory:
 - `05_demo_walkthrough.md` — Demo scenario and outputs  
 - `06_anduril_role_alignment.md` — How to frame the project for Anduril-adjacent roles  
 - `07_dynamic_policy_comparison.md` — Heterogeneous fleet, dynamic tasks, and dashboard workflow
+- `live_demo/index.html` — Local showcase page that pulls together the strongest artifacts
 
 ---
 

@@ -1,1 +1,1 @@
-__all__ = ["html"]
+__all__ = ["html", "live_demo"]

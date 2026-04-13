@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISR Demo Viewer</title>
+  <style>
+    :root {
+      --bg: #f1ece2;
+      --bg-deep: #13242d;
+      --panel: rgba(255, 249, 240, 0.9);
+      --ink: #11222b;
+      --muted: #55646b;
+      --line: rgba(17, 34, 43, 0.14);
+      --accent: #b85a11;
+      --accent-soft: rgba(184, 90, 17, 0.12);
+      --shadow: 0 18px 50px rgba(17, 34, 43, 0.12);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(245, 197, 133, 0.22), transparent 38%),
+        linear-gradient(180deg, #f7f2e8 0%, var(--bg) 44%, #efe7da 100%);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(17, 34, 43, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17, 34, 43, 0.035) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 80%);
+    }
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      padding: 28px 24px 48px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at right top, rgba(255, 196, 111, 0.35), transparent 28%),
+        linear-gradient(135deg, rgba(10, 23, 31, 0.96), rgba(25, 45, 56, 0.88));
+      color: #f5efe5;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.04) 35%, transparent 62%),
+        radial-gradient(circle at 78% 34%, rgba(255, 219, 165, 0.22), transparent 24%);
+      mix-blend-mode: screen;
+    }
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 48px;
+      align-items: end;
+      min-height: calc(100svh - 76px);
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: 0.78rem;
+      color: rgba(245, 239, 229, 0.72);
+      margin-bottom: 18px;
+    }
+    h1, h2, h3 {
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-weight: 600;
+      line-height: 0.96;
+      margin: 0;
+    }
+    h1 {
+      font-size: clamp(3.2rem, 7vw, 6.4rem);
+      max-width: 7ch;
+      letter-spacing: -0.04em;
+    }
+    .hero-copy p {
+      max-width: 40rem;
+      margin: 20px 0 0;
+      font-size: 1.04rem;
+      line-height: 1.6;
+      color: rgba(245, 239, 229, 0.8);
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 239, 229, 0.22);
+      color: #f5efe5;
+      text-decoration: none;
+      transition: transform 220ms ease, background 220ms ease, border-color 220ms ease;
+      backdrop-filter: blur(8px);
+    }
+    .action:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(245, 239, 229, 0.42);
+    }
+    .action-primary {
+      background: linear-gradient(135deg, #f1a04d, #b85a11);
+      border-color: transparent;
+      color: #1a130f;
+      font-weight: 700;
+    }
+    .hero-board {
+      padding: 24px 0 0;
+      border-top: 1px solid rgba(245, 239, 229, 0.16);
+      align-self: stretch;
+      display: grid;
+      align-content: end;
+    }
+    .board-label {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.72rem;
+      color: rgba(245, 239, 229, 0.62);
+      margin-bottom: 12px;
+    }
+    .board-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+    }
+    .board-list li {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(245, 239, 229, 0.12);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px 24px 80px;
+    }
+    .section {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 520ms ease, transform 520ms ease;
+      margin-top: 42px;
+    }
+    .section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 22px;
+    }
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 40rem;
+    }
+    h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: -0.03em;
+    }
+    .ops-rail {
+      display: grid;
+      gap: 14px;
+      padding-top: 8px;
+    }
+    .ops-rail div {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .tables {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 20px;
+    }
+    .table-panel, .command-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px 22px 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .table-panel h3, .command-panel h3 {
+      font-size: 1.35rem;
+      margin-bottom: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    tr.is-best td:first-child {
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+    .evidence {
+      margin: 0;
+      background: rgba(255, 251, 245, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 260ms ease, box-shadow 260ms ease;
+    }
+    .evidence:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 52px rgba(17, 34, 43, 0.16);
+    }
+    .evidence img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+    }
+    .evidence figcaption {
+      padding: 14px 16px 18px;
+      color: var(--muted);
+      text-transform: capitalize;
+    }
+    .command-panel pre {
+      margin: 0;
+      padding: 18px 20px;
+      overflow-x: auto;
+      border-radius: 20px;
+      background: #111b21;
+      color: #f5efe5;
+      line-height: 1.6;
+    }
+    .command-panel code {
+      font-family: "SFMono-Regular", "Consolas", monospace;
+      font-size: 0.94rem;
+    }
+    .artifact-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .artifact-links a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(17, 34, 43, 0.18);
+      padding-bottom: 2px;
+    }
+    .artifact-links a:hover {
+      color: var(--accent);
+      border-bottom-color: rgba(184, 90, 17, 0.5);
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+    .meta .table-panel {
+      min-height: 100%;
+    }
+    .small {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.6;
+    }
+    .run-tag {
+      display: inline-flex;
+      margin-top: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.86rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .empty {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    @media (max-width: 980px) {
+      .hero-inner,
+      .section-head,
+      .tables,
+      .meta {
+        grid-template-columns: 1fr;
+      }
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+      .hero {
+        min-height: auto;
+        padding-bottom: 36px;
+      }
+      .hero-inner {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="eyebrow">ISR Drone Deployment Trade Study</div>
+        <h1>Live demo for the operations-side story.</h1>
+        <p>This viewer turns the repo into a showable artifact: a mission brief, the strongest comparison outputs, and direct links into the local dashboard and analyst writeups.</p>
+        <div class="hero-actions">
+          <a class='action action-primary' href='../../results/policy/policy_comparison_dynamic_heterogeneous_20260413_133740/dashboard.html'>Open policy dashboard</a><a class='action' href='../../results/policy/policy_comparison_dynamic_heterogeneous_20260413_133740/policy_report.md'>Open policy brief</a><a class='action' href='../../results/demo/demo_priority_trade_study_20260413_093212/demo_report.md'>Open demo brief</a>
+        </div>
+      </div>
+      <aside class="hero-board">
+        <div class="board-label">Why this reads differently than Aerotrack</div>
+        <ul class="board-list">
+          <li>Simulation and trade-study first, not an ML product shell.</li>
+          <li>Dynamic tasking, heterogeneous fleets, and policy evaluation instead of API-driven inference.</li>
+          <li>Closer to operations analysis, data science, autonomy evaluation, and data engineering workstreams.</li>
+          <li>Built around explainable mission tradeoffs you can walk through in an interview.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Mission snapshot</h2>
+        </div>
+        <p>The strongest current story is not that the heuristic always wins. It is that the project now supports honest policy comparison under changing demand, with outputs that are stable enough to review like analyst material.</p>
+      </div>
+      <div class="meta">
+        <article class="table-panel">
+          <h3>Current readout</h3>
+          <ul class="board-list"><li>Best dynamic policy: priority_patrol at mission-fit 0.680.</li><li>Task-completion lift vs static: 0.250.</li><li>Weighted-coverage lift vs static: 0.455.</li><li>Priority demo contrast: static weighted coverage 0.355 vs patrol 0.884.</li></ul>
+        </article>
+        <article class="table-panel">
+          <h3>Latest local runs</h3>
+          <p class="small">Priority demo: <span class="run-tag">demo_priority_trade_study_20260413_093212</span></p>
+          <p class="small">Policy comparison: <span class="run-tag">policy_comparison_dynamic_heterogeneous_20260413_133740</span></p>
+          <p class="small">These links point at your local generated artifacts, so the page stays tied to the freshest run instead of a hand-written summary.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Two demo layers</h2>
+        </div>
+        <div class="ops-rail">
+          <div>The priority-weighted trade study shows static versus patrol tradeoffs without the flat-graph problem from the original blank-grid setup.</div>
+          <div>The dynamic policy workflow adds tasks, fleet heterogeneity, DuckDB persistence, and a real policy ranking surface.</div>
+        </div>
+      </div>
+      <div class="tables">
+        <article class="table-panel">
+          <h3>Priority-weighted trade study</h3>
+          <table><thead><tr><th>Strategy</th><th>Drones</th><th>Radius</th><th>Mission Fit</th><th>Weighted Cov</th><th>Priority Persist</th></tr></thead><tbody><tr><td>patrol</td><td>3</td><td>5</td><td>0.816</td><td>0.884</td><td>0.863</td></tr><tr><td>patrol</td><td>6</td><td>7</td><td>0.802</td><td>0.993</td><td>0.893</td></tr><tr><td>patrol</td><td>3</td><td>7</td><td>0.797</td><td>0.841</td><td>0.904</td></tr><tr><td>patrol</td><td>9</td><td>7</td><td>0.781</td><td>0.995</td><td>0.916</td></tr></tbody></table>
+        </article>
+        <article class="table-panel">
+          <h3>Dynamic policy ranking</h3>
+          <table><thead><tr><th>Strategy</th><th>Mission Fit</th><th>Weighted Cov</th><th>Task Service</th><th>Completion</th><th>Mean Response</th></tr></thead><tbody><tr class='is-best'><td>priority_patrol</td><td>0.680</td><td>0.562</td><td>0.384</td><td>1.000</td><td>2.15</td></tr><tr><td>greedy_patrol</td><td>0.620</td><td>0.496</td><td>0.381</td><td>0.750</td><td>2.47</td></tr><tr><td>patrol</td><td>0.516</td><td>0.834</td><td>0.086</td><td>0.850</td><td>6.50</td></tr><tr><td>static</td><td>0.491</td><td>0.107</td><td>0.106</td><td>0.750</td><td>0.00</td></tr></tbody></table>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Evidence wall</h2>
+        </div>
+        <p>These are the stable figures committed in the repo, so the demo is viewable without digging through timestamped result folders.</p>
+      </div>
+      <div class="gallery">
+        <figure class='evidence'><img src='../figures/demo_priority_priority_vs_global.png' alt='demo priority priority vs global'><figcaption>demo priority priority vs global</figcaption></figure><figure class='evidence'><img src='../figures/demo_priority_best_timeseries.png' alt='demo priority best timeseries'><figcaption>demo priority best timeseries</figcaption></figure><figure class='evidence'><img src='../figures/demo_priority_redundancy_vs_coverage.png' alt='demo priority redundancy vs coverage'><figcaption>demo priority redundancy vs coverage</figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_strategy_bars.png' alt='policy dynamic strategy bars'><figcaption>policy dynamic strategy bars</figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_task_service_vs_response.png' alt='policy dynamic task service vs response'><figcaption>policy dynamic task service vs response</figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_timeseries.png' alt='policy dynamic timeseries'><figcaption>policy dynamic timeseries</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Open it locally</h2>
+        </div>
+        <p>This is intended to be a lightweight local showcase. Build or refresh the site, then serve the repo root and visit the live-demo page in your browser.</p>
+      </div>
+      <div class="tables">
+        <article class="command-panel">
+          <h3>Commands</h3>
+          <pre><code>make live-demo
+make serve-demo
+
+# then open
+http://127.0.0.1:8000/docs/live_demo/index.html</code></pre>
+        </article>
+        <article class="command-panel">
+          <h3>Role alignment</h3>
+          <div class="artifact-links">
+            <a href="../06_anduril_role_alignment.md">Anduril role framing</a>
+            <a href="../05_demo_walkthrough.md">Demo walkthrough</a>
+            <a href="../07_dynamic_policy_comparison.md">Dynamic policy writeup</a>
+            <a href="../04_results_summary.md">Results summary</a>
+          </div>
+          <p class="small">Best fit: operations analyst, data scientist, data engineer, or autonomy-evaluation-adjacent work. Least natural fit: pure MLE, unless you frame this as the offline evaluation harness for routing or autonomy policies.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { threshold: 0.18 });
+    document.querySelectorAll('.section').forEach((section) => observer.observe(section));
+  </script>
+</body>
+</html>

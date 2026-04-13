@@ -1,7 +1,7 @@
 PYTHON ?= python3
 MPLCONFIGDIR ?= /tmp/mpl
 
-.PHONY: install test demo policy sweep export
+.PHONY: install test demo policy sweep export live-demo serve-demo
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -20,3 +20,9 @@ sweep:
 
 export:
 	MPLCONFIGDIR=$(MPLCONFIGDIR) $(PYTHON) scripts/export_results.py
+
+live-demo:
+	$(PYTHON) scripts/build_live_demo.py
+
+serve-demo:
+	$(PYTHON) -m http.server 8000
