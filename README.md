@@ -179,7 +179,14 @@ The showcase site is static HTML plus committed figures, so GitHub Pages is the 
 - Use **GitHub Pages** if you want a project site, figures, and plain-English walkthrough online.
 - Use **Render** only if you later add a backend such as uploads, API routes, or live simulation runs in the browser.
 
-Once this branch is merged, you can point GitHub Pages at the `docs/` folder and host the site without any server code.
+Once this branch is merged, publish it as a project site from `main` and the `docs/` folder:
+
+1. On GitHub, open the repository and go to `Settings` -> `Pages`.
+2. Under `Build and deployment`, choose `Deploy from a branch`.
+3. Select branch `main` and folder `/docs`, then save.
+4. GitHub Pages will publish the site at `https://<your-user>.github.io/isr-drone-deployment-trade-study/`.
+
+The repo already includes `docs/index.html` as the landing page redirect and `docs/.nojekyll` so GitHub Pages serves the static files directly.
 
 ---
 

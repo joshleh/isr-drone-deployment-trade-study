@@ -3,18 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#112430">
+  <meta name="color-scheme" content="light">
   <title>ISR Mission Tasking Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23112430'/%3E%3Cpath d='M16 45V19h6v26zm13 0V25h6v20zm13 0V13h6v32z' fill='%23f7efe2'/%3E%3C/svg%3E">
   <style>
     :root {
-      --bg: #f2ece1;
-      --ink: #122631;
-      --muted: #5b696e;
-      --panel: rgba(255, 251, 245, 0.92);
-      --line: rgba(18, 38, 49, 0.12);
-      --accent: #bf5d18;
-      --accent-soft: rgba(191, 93, 24, 0.12);
-      --hero: linear-gradient(145deg, rgba(12, 23, 30, 0.98), rgba(27, 46, 57, 0.9));
-      --shadow: 0 18px 44px rgba(18, 38, 49, 0.12);
+      --bg: #f2ecdf;
+      --bg-deep: #e9dfd0;
+      --ink: #10222d;
+      --muted: #495b65;
+      --panel: rgba(255, 250, 244, 0.9);
+      --panel-strong: rgba(255, 252, 247, 0.98);
+      --line: rgba(16, 34, 45, 0.12);
+      --accent: #7d4c0d;
+      --accent-strong: #5f3707;
+      --accent-soft: rgba(125, 76, 13, 0.11);
+      --hero: linear-gradient(145deg, #0d1c25 0%, #153140 54%, #0f2431 100%);
+      --hero-line: rgba(247, 239, 226, 0.12);
+      --hero-text: #f7efe2;
+      --hero-muted: rgba(247, 239, 226, 0.78);
+      --focus: #0e5f74;
+      --shadow: 0 18px 46px rgba(16, 34, 45, 0.09);
     }
     * {
       box-sizing: border-box;
@@ -26,202 +36,362 @@
       margin: 0;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(239, 186, 122, 0.18), transparent 34%),
-        linear-gradient(180deg, #f8f3ea 0%, var(--bg) 44%, #ede4d6 100%);
+        radial-gradient(circle at top left, rgba(205, 161, 94, 0.14), transparent 32%),
+        linear-gradient(180deg, #f8f4eb 0%, var(--bg) 48%, var(--bg-deep) 100%);
       font-family: "Avenir Next", "Segoe UI", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    a {
+      color: var(--accent-strong);
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+    .skip-link {
+      position: absolute;
+      left: 20px;
+      top: -48px;
+      z-index: 50;
+      background: var(--panel-strong);
+      color: var(--ink);
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      text-decoration: none;
+    }
+    .skip-link:focus {
+      top: 18px;
     }
     .hero {
-      min-height: 100svh;
-      padding: 28px 24px 42px;
-      color: #f7efe2;
+      min-height: 88svh;
+      padding: 40px 28px 54px;
+      color: var(--hero-text);
       background: var(--hero);
       position: relative;
       overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to right, transparent 0, transparent calc(100% - 1px), rgba(247, 239, 226, 0.04) calc(100% - 1px)),
+        linear-gradient(to bottom, transparent 0, transparent calc(100% - 1px), rgba(247, 239, 226, 0.04) calc(100% - 1px));
+      background-size: 88px 88px;
+      opacity: 0.35;
+      pointer-events: none;
     }
     .hero::after {
       content: "";
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.045) 36%, transparent 62%),
-        radial-gradient(circle at 80% 28%, rgba(255, 205, 138, 0.2), transparent 22%);
+        radial-gradient(circle at 78% 24%, rgba(234, 172, 93, 0.22), transparent 20%),
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.045) 38%, transparent 63%);
       pointer-events: none;
     }
     .hero-inner,
     main {
-      max-width: 1200px;
+      max-width: 1120px;
       margin: 0 auto;
     }
     .hero-inner {
       position: relative;
       z-index: 1;
-      min-height: calc(100svh - 70px);
+      min-height: calc(88svh - 94px);
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-      gap: 40px;
-      align-items: end;
+      grid-template-columns: minmax(0, 1.06fr) minmax(320px, 0.94fr);
+      gap: 48px;
+      align-items: center;
+    }
+    .hero-copy {
+      padding: 24px 0;
     }
     .eyebrow {
       text-transform: uppercase;
-      letter-spacing: 0.2em;
-      font-size: 0.78rem;
-      color: rgba(247, 239, 226, 0.72);
+      letter-spacing: 0.22em;
+      font-size: 0.75rem;
+      color: rgba(247, 239, 226, 0.74);
       margin-bottom: 18px;
     }
     .eyebrow-small {
       text-transform: uppercase;
       letter-spacing: 0.16em;
-      font-size: 0.74rem;
-      color: var(--accent);
+      font-size: 0.72rem;
+      color: var(--accent-strong);
       margin-bottom: 10px;
+      font-weight: 700;
     }
     h1, h2, h3 {
       font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
       margin: 0;
-      line-height: 0.97;
     }
     h1 {
-      font-size: clamp(3rem, 7vw, 6.2rem);
-      max-width: 7ch;
-      letter-spacing: -0.04em;
+      font-size: clamp(2.9rem, 6vw, 5.15rem);
+      max-width: 8ch;
+      letter-spacing: -0.045em;
+      line-height: 0.95;
     }
     h2 {
-      font-size: clamp(2rem, 4vw, 3rem);
+      font-size: clamp(2rem, 3.7vw, 2.8rem);
+      line-height: 1;
       letter-spacing: -0.03em;
     }
     h3 {
-      font-size: 1.35rem;
+      font-size: 1.34rem;
       line-height: 1.15;
     }
     .hero-copy p,
     .section-head p,
-    .lede {
+    .lede,
+    .info-card p,
+    .glossary-card p,
+    .result-card p {
       line-height: 1.7;
-      font-size: 1.04rem;
+      font-size: 1.02rem;
     }
     .hero-copy p {
-      color: rgba(247, 239, 226, 0.84);
-      max-width: 40rem;
-      margin-top: 20px;
+      color: var(--hero-muted);
+      max-width: 33rem;
+      margin: 20px 0 0;
     }
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 26px;
+      margin-top: 28px;
     }
     .action {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-height: 46px;
       border-radius: 999px;
       padding: 12px 18px;
       text-decoration: none;
-      color: #f7efe2;
-      border: 1px solid rgba(247, 239, 226, 0.2);
-      transition: transform 180ms ease, background 180ms ease;
+      color: var(--hero-text);
+      border: 1px solid rgba(247, 239, 226, 0.24);
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
     }
     .action:hover {
       transform: translateY(-2px);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(247, 239, 226, 0.4);
     }
     .action-primary {
-      background: linear-gradient(135deg, #ef9b4d, #bf5d18);
-      color: #1c130d;
+      background: linear-gradient(135deg, #f0ba7b, #b86a1e);
+      color: #1b130d;
       border-color: transparent;
       font-weight: 700;
+    }
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 30px;
+      max-width: 52rem;
+    }
+    .stat-pill {
+      padding: 14px 14px 12px;
+      border-radius: 18px;
+      background: rgba(255, 249, 241, 0.08);
+      border: 1px solid var(--hero-line);
+      display: grid;
+      gap: 6px;
+    }
+    .stat-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(247, 239, 226, 0.68);
+    }
+    .stat-pill strong {
+      font-size: 1rem;
+      line-height: 1.25;
+      color: var(--hero-text);
     }
     .hero-panel {
       background: rgba(255, 248, 238, 0.08);
       border: 1px solid rgba(247, 239, 226, 0.12);
-      border-radius: 28px;
-      padding: 22px;
-      backdrop-filter: blur(8px);
+      border-radius: 30px;
+      padding: 26px 24px 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 40px rgba(3, 8, 12, 0.24);
     }
     .summary-list,
     .mini-list {
       margin: 0;
-      padding-left: 18px;
-      line-height: 1.6;
+      line-height: 1.65;
     }
-    .summary-list li + li,
-    .mini-list li + li {
-      margin-top: 8px;
+    .summary-list {
+      padding-left: 18px;
+    }
+    .summary-list li + li {
+      margin-top: 10px;
+    }
+    .mini-list {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .mini-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .mini-list li strong {
+      color: var(--ink);
+      text-align: right;
+      font-weight: 700;
     }
     main {
-      padding: 34px 24px 80px;
+      padding: 44px 28px 96px;
     }
     .section {
-      margin-top: 40px;
+      margin-top: 70px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .section:first-of-type {
+      margin-top: 18px;
+    }
+    .section[id] {
+      scroll-margin-top: 28px;
     }
     .section-head {
       display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-      gap: 24px;
+      grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+      gap: 28px;
       align-items: start;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .section-head p {
       margin: 0;
       color: var(--muted);
+      max-width: 42rem;
     }
-    .grid-3,
+    .asset-grid,
+    .zone-grid,
+    .task-grid,
     .glossary-grid,
-    .figure-grid {
+    .figure-grid,
+    .results-grid,
+    .table-grid,
+    .hosting-note {
       display: grid;
       gap: 18px;
     }
-    .grid-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .asset-grid {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .zone-grid {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .task-grid {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     }
     .glossary-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     }
-    .figure-grid {
+    .figure-grid,
+    .table-grid,
+    .hosting-note {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .results-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 18px;
     }
     .info-card,
     .glossary-card,
     .table-panel,
+    .result-card,
     .evidence {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 26px;
+      border-radius: 24px;
       box-shadow: var(--shadow);
     }
     .info-card,
     .glossary-card,
-    .table-panel {
-      padding: 20px;
+    .table-panel,
+    .result-card {
+      padding: 22px;
+    }
+    .info-card,
+    .glossary-card,
+    .result-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
     }
     .info-card p,
-    .glossary-card p {
+    .glossary-card p,
+    .result-card p {
       color: var(--muted);
-      line-height: 1.65;
+      margin: 0;
+    }
+    .table-panel h3 {
+      margin-bottom: 14px;
+    }
+    .table-wrap {
+      overflow-x: auto;
     }
     .table-panel table {
       width: 100%;
+      min-width: 640px;
       border-collapse: collapse;
       font-size: 0.95rem;
     }
     .table-panel th,
     .table-panel td {
       border-bottom: 1px solid var(--line);
-      padding: 11px 8px;
+      padding: 12px 8px;
       text-align: left;
       vertical-align: top;
     }
     .table-panel th {
       color: var(--muted);
-      font-weight: 600;
-    }
-    tr.is-best td:first-child {
-      color: var(--accent);
       font-weight: 700;
+      white-space: nowrap;
+    }
+    .table-panel td strong {
+      display: inline-block;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .table-chip {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 0.73rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+    tr.is-best td:first-child strong {
+      color: var(--accent-strong);
     }
     .evidence {
       overflow: hidden;
       margin: 0;
+      background: var(--panel-strong);
     }
     .evidence img {
       display: block;
@@ -240,30 +410,30 @@
       color: var(--ink);
     }
     .callout {
-      padding: 18px 20px;
+      max-width: 50rem;
+      padding: 20px 22px 20px 24px;
       border-radius: 22px;
       background: var(--accent-soft);
-      border: 1px solid rgba(191, 93, 24, 0.18);
-      line-height: 1.65;
-      color: #5d3011;
-    }
-    .hosting-note {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: 1px solid rgba(125, 76, 13, 0.18);
+      border-left: 5px solid var(--accent);
+      line-height: 1.7;
+      color: var(--accent-strong);
     }
     .empty {
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.65;
     }
-    @media (max-width: 980px) {
+    @media (max-width: 1040px) {
       .hero-inner,
       .section-head,
-      .grid-3,
-      .glossary-grid,
+      .results-grid,
+      .table-grid,
       .figure-grid,
       .hosting-note {
         grid-template-columns: 1fr;
+      }
+      .hero-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .hero {
         min-height: auto;
@@ -272,9 +442,37 @@
         min-height: auto;
       }
     }
+    @media (max-width: 720px) {
+      .hero,
+      main {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      .hero {
+        padding-top: 30px;
+        padding-bottom: 40px;
+      }
+      .hero-meta {
+        grid-template-columns: 1fr;
+      }
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .action {
+        width: 100%;
+      }
+      .table-panel {
+        padding: 18px;
+      }
+      .table-panel table {
+        min-width: 560px;
+      }
+    }
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-copy">
@@ -286,6 +484,9 @@
           <a class="action" href="#results">See the policy results</a>
           <a class="action" href="#hosting">Hosting notes</a>
         </div>
+        <div class="hero-meta">
+          <div class='stat-pill'><span class='stat-label'>Fleet</span><strong>6 assets</strong></div><div class='stat-pill'><span class='stat-label'>Priority areas</span><strong>3 zones</strong></div><div class='stat-pill'><span class='stat-label'>Dynamic tasks</span><strong>4 live tasks</strong></div><div class='stat-pill'><span class='stat-label'>Publishing</span><strong>GitHub Pages ready</strong></div>
+        </div>
       </div>
       <aside class="hero-panel">
         <div class="eyebrow-small">If you only read one thing</div>
@@ -296,7 +497,7 @@
     </div>
   </section>
 
-  <main>
+  <main id="main">
     <section class="section">
       <div class="section-head">
         <div>
@@ -316,8 +517,8 @@
         </div>
         <p>A finite ISR fleet must keep watch over 3 important area(s) while reacting to 4 time-varying task(s). The preferred control logic is task-aware planner, which balances standing coverage with rapid retasking.</p>
       </div>
-      <div class="grid-3">
-        <article class='info-card'><div class='eyebrow-small'>Anchor assets</div><h3>Sentinel x2</h3><p>Sentinel platform with sensor radius 7, endurance 240 steps, and cruise step size 1; typically stays over high-value areas and keeps persistent watch.</p><ul class='mini-list'><li>Sensor radius: 7</li><li>Endurance: 240 steps</li><li>Cruise step size: 1</li></ul></article><article class='info-card'><div class='eyebrow-small'>Response assets</div><h3>Scout x4</h3><p>Scout platform with sensor radius 4, endurance 180 steps, and cruise step size 2; typically moves quickly toward new incidents and unserved space.</p><ul class='mini-list'><li>Sensor radius: 4</li><li>Endurance: 180 steps</li><li>Cruise step size: 2</li></ul></article>
+      <div class="asset-grid">
+        <article class='info-card'><div class='eyebrow-small'>Anchor assets</div><h3>Sentinel x2</h3><p>Sentinel platform with sensor radius 7, endurance 240 steps, and cruise step size 1; typically stays over high-value areas and keeps persistent watch.</p><ul class='mini-list'><li><span>Sensor radius</span><strong>7</strong></li><li><span>Endurance</span><strong>240 steps</strong></li><li><span>Cruise step size</span><strong>1</strong></li></ul></article><article class='info-card'><div class='eyebrow-small'>Response assets</div><h3>Scout x4</h3><p>Scout platform with sensor radius 4, endurance 180 steps, and cruise step size 2; typically moves quickly toward new incidents and unserved space.</p><ul class='mini-list'><li><span>Sensor radius</span><strong>4</strong></li><li><span>Endurance</span><strong>180 steps</strong></li><li><span>Cruise step size</span><strong>2</strong></li></ul></article>
       </div>
     </section>
 
@@ -328,8 +529,8 @@
         </div>
         <p>The planner is not treating the map as equally important everywhere. Some zones matter more, so missing them should hurt the score more.</p>
       </div>
-      <div class="grid-3">
-        <article class='info-card'><div class='eyebrow-small'>Priority zone</div><h3>Logistics Hub</h3><p>Protects the logistics hub where missed coverage is most costly.</p><ul class='mini-list'><li>Weight: 4.0</li><li>Centroid: (71, 29)</li><li>Area: 621 cells</li></ul></article><article class='info-card'><div class='eyebrow-small'>Priority zone</div><h3>Crossing Lane</h3><p>Monitors the likely transit lane where activity can spike quickly.</p><ul class='mini-list'><li>Weight: 3.0</li><li>Centroid: (37, 30)</li><li>Area: 525 cells</li></ul></article><article class='info-card'><div class='eyebrow-small'>Priority zone</div><h3>Border Corridor</h3><p>Keeps persistent watch on the border approach.</p><ul class='mini-list'><li>Weight: 2.0</li><li>Centroid: (10, 29)</li><li>Area: 960 cells</li></ul></article>
+      <div class="zone-grid">
+        <article class='info-card'><div class='eyebrow-small'>Priority zone</div><h3>Logistics Hub</h3><p>Protects the logistics hub where missed coverage is most costly.</p><ul class='mini-list'><li><span>Weight</span><strong>4.0</strong></li><li><span>Centroid</span><strong>(71, 29)</strong></li><li><span>Area</span><strong>621 cells</strong></li></ul></article><article class='info-card'><div class='eyebrow-small'>Priority zone</div><h3>Crossing Lane</h3><p>Monitors the likely transit lane where activity can spike quickly.</p><ul class='mini-list'><li><span>Weight</span><strong>3.0</strong></li><li><span>Centroid</span><strong>(37, 30)</strong></li><li><span>Area</span><strong>525 cells</strong></li></ul></article><article class='info-card'><div class='eyebrow-small'>Priority zone</div><h3>Border Corridor</h3><p>Keeps persistent watch on the border approach.</p><ul class='mini-list'><li><span>Weight</span><strong>2.0</strong></li><li><span>Centroid</span><strong>(10, 29)</strong></li><li><span>Area</span><strong>960 cells</strong></li></ul></article>
       </div>
     </section>
 
@@ -340,8 +541,8 @@
         </div>
         <p>These are the time-varying incidents that appear after the mission starts. A good planner has to react to them without abandoning the persistent-watch areas completely.</p>
       </div>
-      <div class="grid-3">
-        <article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>North Crossing Spike</h3><p>Respond to a sudden surveillance spike near a crossing route.</p><ul class='mini-list'><li>Priority: 3.5</li><li>Window: step 25 to 70</li><li>Best owner: Fast response assets</li></ul></article><article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>Central Convoy Track</h3><p>Track a moving convoy-like event through the middle corridor.</p><ul class='mini-list'><li>Priority: 4.0</li><li>Window: step 72 to 118</li><li>Best owner: Fast response assets</li></ul></article><article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>Hub Anomaly</h3><p>Investigate suspicious activity near the logistics hub.</p><ul class='mini-list'><li>Priority: 5.0</li><li>Window: step 110 to 170</li><li>Best owner: Fast response assets</li></ul></article><article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>Southern Border Retask</h3><p>Shift surveillance attention to the southern edge later in the mission.</p><ul class='mini-list'><li>Priority: 3.0</li><li>Window: step 150 to 220</li><li>Best owner: Fast response assets</li></ul></article>
+      <div class="task-grid">
+        <article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>North Crossing Spike</h3><p>Respond to a sudden surveillance spike near a crossing route.</p><ul class='mini-list'><li><span>Priority</span><strong>3.5</strong></li><li><span>Window</span><strong>step 25 to 70</strong></li><li><span>Best owner</span><strong>Fast response assets</strong></li></ul></article><article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>Central Convoy Track</h3><p>Track a moving convoy-like event through the middle corridor.</p><ul class='mini-list'><li><span>Priority</span><strong>4.0</strong></li><li><span>Window</span><strong>step 72 to 118</strong></li><li><span>Best owner</span><strong>Fast response assets</strong></li></ul></article><article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>Hub Anomaly</h3><p>Investigate suspicious activity near the logistics hub.</p><ul class='mini-list'><li><span>Priority</span><strong>5.0</strong></li><li><span>Window</span><strong>step 110 to 170</strong></li><li><span>Best owner</span><strong>Fast response assets</strong></li></ul></article><article class='info-card'><div class='eyebrow-small'>Dynamic task</div><h3>Southern Border Retask</h3><p>Shift surveillance attention to the southern edge later in the mission.</p><ul class='mini-list'><li><span>Priority</span><strong>3.0</strong></li><li><span>Window</span><strong>step 150 to 220</strong></li><li><span>Best owner</span><strong>Fast response assets</strong></li></ul></article>
       </div>
     </section>
 
@@ -387,16 +588,19 @@
         <div>
           <h2>Latest result snapshot</h2>
         </div>
-        <p>The comparison below uses the current saved outputs. The labels are intentionally human-readable so the site feels like a mission brief instead of a notebook dump.</p>
+        <p>The comparison below uses the current saved outputs. The labels are intentionally human-readable so the site feels like a mission brief instead of a notebook dump, and the important states are called out with text badges instead of color alone.</p>
       </div>
-      <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+      <div class="results-grid">
+        <article class='result-card'><div class='eyebrow-small'>Best current planner</div><h3>Task-aware planner</h3><p>Keeps long-endurance assets on key zones while fast assets react to live tasks.</p><ul class='mini-list'><li><span>Mission fit</span><strong>0.680</strong></li><li><span>Task completion</span><strong>1.000</strong></li></ul></article><article class='result-card'><div class='eyebrow-small'>Lead over runner-up</div><h3>0.073</h3><p>Task-aware planner currently leads Assignment planner on the overall mission-fit score.</p><ul class='mini-list'><li><span>Runner-up</span><strong>Assignment planner</strong></li><li><span>Response time</span><strong>2.15 steps</strong></li></ul></article><article class='result-card'><div class='eyebrow-small'>How to read the win</div><h3>Balance, not just reach</h3><p>The strongest planner is not the one that visits the most cells. It is the one that keeps persistent watch on high-value zones while still reacting quickly to late-arriving tasks.</p><ul class='mini-list'><li><span>Task service</span><strong>0.384</strong></li><li><span>Why it stands out</span><strong>Anchors plus responders</strong></li></ul></article>
+      </div>
+      <div class="table-grid">
         <article class="table-panel">
           <h3>Priority demo sweep</h3>
-          <table><thead><tr><th>Strategy</th><th>Drones</th><th>Sensor radius</th><th>Mission fit</th><th>Weighted coverage</th><th>Priority persistence</th></tr></thead><tbody><tr><td>Random patrol</td><td>3</td><td>5</td><td>0.816</td><td>0.884</td><td>0.863</td></tr><tr><td>Random patrol</td><td>6</td><td>7</td><td>0.802</td><td>0.993</td><td>0.893</td></tr><tr><td>Random patrol</td><td>3</td><td>7</td><td>0.797</td><td>0.841</td><td>0.904</td></tr><tr><td>Random patrol</td><td>9</td><td>7</td><td>0.781</td><td>0.995</td><td>0.916</td></tr></tbody></table>
+          <div class='table-wrap'><table><thead><tr><th scope='col'>Strategy</th><th scope='col'>Drones</th><th scope='col'>Sensor radius</th><th scope='col'>Mission fit</th><th scope='col'>Weighted coverage</th><th scope='col'>Priority persistence</th></tr></thead><tbody><tr><td><strong>Random patrol</strong><span class='table-chip'>Best sweep row</span></td><td>3</td><td>5</td><td>0.816</td><td>0.884</td><td>0.863</td></tr><tr><td><strong>Random patrol</strong></td><td>6</td><td>7</td><td>0.802</td><td>0.993</td><td>0.893</td></tr><tr><td><strong>Random patrol</strong></td><td>3</td><td>7</td><td>0.797</td><td>0.841</td><td>0.904</td></tr><tr><td><strong>Random patrol</strong></td><td>9</td><td>7</td><td>0.781</td><td>0.995</td><td>0.916</td></tr></tbody></table></div>
         </article>
         <article class="table-panel">
           <h3>Dynamic policy comparison</h3>
-          <table><thead><tr><th>Policy</th><th>Mission fit</th><th>Task service</th><th>Completion</th><th>Response time</th><th>What it does</th></tr></thead><tbody><tr class='is-best'><td>Task-aware planner</td><td>0.680</td><td>0.384</td><td>1.000</td><td>2.15</td><td>Keeps long-endurance assets on key zones while fast assets react to live tasks.</td></tr><tr><td>Assignment planner</td><td>0.607</td><td>0.392</td><td>0.750</td><td>3.53</td><td>Assigns each drone to the most valuable target each step.</td></tr><tr><td>Random patrol</td><td>0.516</td><td>0.086</td><td>0.850</td><td>6.50</td><td>Sweeps around randomly. Good for reach, but weaker at disciplined response.</td></tr><tr><td>Static coverage plan</td><td>0.491</td><td>0.106</td><td>0.750</td><td>0.00</td><td>Holds fixed positions the whole mission. Best when you care most about staying over one place.</td></tr></tbody></table>
+          <div class='table-wrap'><table><thead><tr><th scope='col'>Policy</th><th scope='col'>Mission fit</th><th scope='col'>Task service</th><th scope='col'>Completion</th><th scope='col'>Response time</th><th scope='col'>What it does</th></tr></thead><tbody><tr class='is-best'><td><strong>Task-aware planner</strong><span class='table-chip'>Top policy</span></td><td>0.680</td><td>0.384</td><td>1.000</td><td>2.15</td><td>Keeps long-endurance assets on key zones while fast assets react to live tasks.</td></tr><tr><td><strong>Assignment planner</strong></td><td>0.607</td><td>0.392</td><td>0.750</td><td>3.53</td><td>Assigns each drone to the most valuable target each step.</td></tr><tr><td><strong>Random patrol</strong></td><td>0.516</td><td>0.086</td><td>0.850</td><td>6.50</td><td>Sweeps around randomly. Good for reach, but weaker at disciplined response.</td></tr><tr><td><strong>Static coverage plan</strong></td><td>0.491</td><td>0.106</td><td>0.750</td><td>0.00</td><td>Holds fixed positions the whole mission. Best when you care most about staying over one place.</td></tr></tbody></table></div>
         </article>
       </div>
     </section>
@@ -406,10 +610,10 @@
         <div>
           <h2>What the charts are showing</h2>
         </div>
-        <p>The figures below are the stable assets committed in the repo, so this site stays portable and can be hosted statically without any backend compute.</p>
+        <p>The figures below are the stable assets committed in the repo, so this site stays portable and can be hosted statically without any backend compute. The updated chart palette also uses colorblind-safe colors plus distinct line styles, markers, and labels.</p>
       </div>
       <div class="figure-grid">
-        <figure class='evidence'><img src='../figures/demo_priority_priority_vs_global.png' alt='Priority zones versus total map coverage'><figcaption><strong>Priority zones versus total map coverage</strong><span>This shows the tradeoff between watching the whole map and staying focused on the places that matter most.</span></figcaption></figure><figure class='evidence'><img src='../figures/demo_priority_best_timeseries.png' alt='How coverage changes over time'><figcaption><strong>How coverage changes over time</strong><span>This is the easiest chart for non-technical viewers: it shows when patrol starts to outperform static coverage over the course of the mission.</span></figcaption></figure><figure class='evidence'><img src='../figures/demo_priority_redundancy_vs_coverage.png' alt='When adding assets stops helping'><figcaption><strong>When adding assets stops helping</strong><span>Higher redundancy means the team is spending more time re-covering old space instead of creating new mission value.</span></figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_strategy_bars.png' alt='Overall planner scorecard'><figcaption><strong>Overall planner scorecard</strong><span>This summarizes which policy did best across mission fit, task service, completion, and efficiency.</span></figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_task_service_vs_response.png' alt='Task service versus speed of response'><figcaption><strong>Task service versus speed of response</strong><span>Better planners both react quickly and keep more of the active task area under watch.</span></figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_timeseries.png' alt='How each planner behaves through the mission'><figcaption><strong>How each planner behaves through the mission</strong><span>This makes the difference between random patrol, assignment planning, and task-aware planning visible over time.</span></figcaption></figure>
+        <figure class='evidence'><img src='../figures/demo_priority_priority_vs_global.png' alt='Priority zones versus total map coverage' loading='lazy'><figcaption><strong>Priority zones versus total map coverage</strong><span>This shows the tradeoff between watching the whole map and staying focused on the places that matter most.</span></figcaption></figure><figure class='evidence'><img src='../figures/demo_priority_best_timeseries.png' alt='How coverage changes over time' loading='lazy'><figcaption><strong>How coverage changes over time</strong><span>This is the easiest chart for non-technical viewers: it shows when patrol starts to outperform static coverage over the course of the mission.</span></figcaption></figure><figure class='evidence'><img src='../figures/demo_priority_redundancy_vs_coverage.png' alt='When adding assets stops helping' loading='lazy'><figcaption><strong>When adding assets stops helping</strong><span>Higher redundancy means the team is spending more time re-covering old space instead of creating new mission value.</span></figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_strategy_bars.png' alt='Overall planner scorecard' loading='lazy'><figcaption><strong>Overall planner scorecard</strong><span>This summarizes which policy did best across mission fit, task service, completion, and efficiency.</span></figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_task_service_vs_response.png' alt='Task service versus speed of response' loading='lazy'><figcaption><strong>Task service versus speed of response</strong><span>Better planners both react quickly and keep more of the active task area under watch.</span></figcaption></figure><figure class='evidence'><img src='../figures/policy_dynamic_timeseries.png' alt='How each planner behaves through the mission' loading='lazy'><figcaption><strong>How each planner behaves through the mission</strong><span>This makes the difference between random patrol, assignment planning, and task-aware planning visible over time.</span></figcaption></figure>
       </div>
     </section>
 

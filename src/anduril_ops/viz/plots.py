@@ -10,6 +10,25 @@ import pandas as pd
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+STRATEGY_STYLES = {
+    "static": {"color": "#3B3B3B", "marker": "s", "linestyle": "--"},
+    "patrol": {"color": "#0072B2", "marker": "o", "linestyle": ":"},
+    "greedy_patrol": {"color": "#E69F00", "marker": "D", "linestyle": "-."},
+    "assignment_patrol": {"color": "#E69F00", "marker": "D", "linestyle": "-."},
+    "priority_patrol": {"color": "#009E73", "marker": "^", "linestyle": "-"},
+}
+
+SENSOR_STYLES = [
+    {"color": "#0072B2", "marker": "o"},
+    {"color": "#D55E00", "marker": "s"},
+    {"color": "#009E73", "marker": "^"},
+    {"color": "#CC79A7", "marker": "D"},
+    {"color": "#56B4E9", "marker": "P"},
+]
+
+METRIC_COLORS = ["#0F4C5C", "#8A5A00", "#0B7A75", "#7A3E9D"]
+METRIC_HATCHES = ["", "//", "xx", ".."]
+
 
 def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
@@ -42,20 +61,49 @@ def _display_strategy_name(strategy: str | None) -> str:
     return labels.get(str(strategy), str(strategy).replace("_", " ").title())
 
 
+def _canonical_strategy(strategy: str | None) -> str | None:
+    if strategy == "greedy_patrol":
+        return "assignment_patrol"
+    return strategy
+
+
+def _style_for_strategy(strategy: str | None) -> dict[str, str]:
+    if strategy is None:
+        return {"color": "#0072B2", "marker": "o", "linestyle": "-"}
+    return STRATEGY_STYLES.get(_canonical_strategy(strategy), {"color": "#0072B2", "marker": "o", "linestyle": "-"})
+
+
+def _style_for_label(label: str) -> dict[str, str]:
+    lower = label.lower()
+    if "task-aware planner" in lower:
+        return _style_for_strategy("priority_patrol")
+    if "assignment planner" in lower:
+        return _style_for_strategy("assignment_patrol")
+    if "random patrol" in lower:
+        return _style_for_strategy("patrol")
+    if "static" in lower:
+        return _style_for_strategy("static")
+    return {"color": "#0072B2", "marker": "o", "linestyle": "-"}
+
+
 def _scatter_by_strategy(ax: plt.Axes, df: pd.DataFrame, x: str, y: str) -> None:
     strategies = list(df["strategy"].unique()) if "strategy" in df.columns else [None]
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-    for idx, strategy in enumerate(strategies):
+    for strategy in strategies:
         subset = df if strategy is None else df[df["strategy"] == strategy]
         label = _display_strategy_name(strategy)
+        style = _style_for_strategy(strategy)
         ax.scatter(
             subset[x],
             subset[y],
             label=label,
             alpha=0.85,
-            s=48,
-            color=colors[idx % len(colors)],
+            s=60,
+            color=style["color"],
+            marker=style["marker"],
+            edgecolors="#10222D",
+            linewidths=0.5,
         )
+    ax.grid(alpha=0.18)
 
 
 def plot_coverage_heatmap(
@@ -78,7 +126,7 @@ def plot_coverage_heatmap(
     ).sort_index().sort_index(axis=1)
 
     fig, ax = plt.subplots()
-    im = ax.imshow(pivot.values, aspect="auto", cmap="viridis", vmin=0.0, vmax=max(1.0, float(np.nanmax(pivot.values))))
+    im = ax.imshow(pivot.values, aspect="auto", cmap="cividis", vmin=0.0, vmax=max(1.0, float(np.nanmax(pivot.values))))
 
     ax.set_title(title)
     ax.set_xlabel("Sensor Radius (cells)")
@@ -144,15 +192,24 @@ def plot_coverage_efficiency_by_fleet(
 
     fig, ax = plt.subplots()
 
-    for r in sorted(df["sensor_radius"].unique()):
+    for idx, r in enumerate(sorted(df["sensor_radius"].unique())):
         sub = df[df["sensor_radius"] == r].sort_values("num_drones")
-        ax.plot(sub["num_drones"], sub["coverage_efficiency"], marker="o", label=f"r={int(r)}")
+        style = SENSOR_STYLES[idx % len(SENSOR_STYLES)]
+        ax.plot(
+            sub["num_drones"],
+            sub["coverage_efficiency"],
+            marker=style["marker"],
+            color=style["color"],
+            linewidth=2.0,
+            label=f"r={int(r)}",
+        )
 
     ax.set_title("Coverage Efficiency vs Fleet Size")
     ax.set_xlabel("Fleet Size (num_drones)")
     ax.set_ylabel("Final Weighted Coverage / Total Cost")
 
     ax.legend(title="Sensor Radius")
+    ax.grid(alpha=0.18)
 
     subtitle = f"strategy={strategy}" if strategy else "all strategies"
     ax.text(0.5, -0.12, subtitle, transform=ax.transAxes, ha="center", va="top")
@@ -250,12 +307,22 @@ def plot_strategy_metric_bars(
 
     fig, ax = plt.subplots(figsize=(10, 5))
     for idx, metric in enumerate(metrics):
-        ax.bar(x + idx * width, summary[metric], width=width, label=metric)
+        ax.bar(
+            x + idx * width,
+            summary[metric],
+            width=width,
+            label=metric,
+            color=METRIC_COLORS[idx % len(METRIC_COLORS)],
+            hatch=METRIC_HATCHES[idx % len(METRIC_HATCHES)],
+            edgecolor="#10222D",
+            linewidth=0.4,
+        )
 
     ax.set_xticks(x + width * (len(metrics) - 1) / 2)
     ax.set_xticklabels(list(summary["strategy_label"]))
     ax.set_title(title)
     ax.legend()
+    ax.grid(axis="y", alpha=0.18)
 
     save_fig(fig, out_path)
 
@@ -271,20 +338,52 @@ def plot_timeseries_comparison(
     Side-by-side coverage curves for the best static and patrol configurations.
     """
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True)
+    static_style = _style_for_label(static_label)
+    patrol_style = _style_for_label(patrol_label)
 
-    axes[0].plot(static_timeseries["t"], static_timeseries["coverage"], label=static_label)
-    axes[0].plot(patrol_timeseries["t"], patrol_timeseries["coverage"], label=patrol_label)
+    axes[0].plot(
+        static_timeseries["t"],
+        static_timeseries["coverage"],
+        label=static_label,
+        color=static_style["color"],
+        linestyle=static_style["linestyle"],
+        linewidth=2.2,
+    )
+    axes[0].plot(
+        patrol_timeseries["t"],
+        patrol_timeseries["coverage"],
+        label=patrol_label,
+        color=patrol_style["color"],
+        linestyle=patrol_style["linestyle"],
+        linewidth=2.2,
+    )
     axes[0].set_title("Global Coverage Over Time")
     axes[0].set_xlabel("Timestep")
     axes[0].set_ylabel("Coverage")
     axes[0].legend()
 
-    axes[1].plot(static_timeseries["t"], static_timeseries["weighted_coverage"], label=static_label)
-    axes[1].plot(patrol_timeseries["t"], patrol_timeseries["weighted_coverage"], label=patrol_label)
+    axes[1].plot(
+        static_timeseries["t"],
+        static_timeseries["weighted_coverage"],
+        label=static_label,
+        color=static_style["color"],
+        linestyle=static_style["linestyle"],
+        linewidth=2.2,
+    )
+    axes[1].plot(
+        patrol_timeseries["t"],
+        patrol_timeseries["weighted_coverage"],
+        label=patrol_label,
+        color=patrol_style["color"],
+        linestyle=patrol_style["linestyle"],
+        linewidth=2.2,
+    )
     axes[1].set_title("Weighted Coverage Over Time")
     axes[1].set_xlabel("Timestep")
     axes[1].set_ylabel("Weighted Coverage")
     axes[1].legend()
+    for ax in axes:
+        ax.grid(alpha=0.18)
 
     save_fig(fig, out_path)
 
@@ -299,9 +398,16 @@ def plot_policy_timeseries(
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.8), sharex=True)
 
     for label, df in timeseries_by_label.items():
-        axes[0].plot(df["t"], df["coverage"], label=label)
-        axes[1].plot(df["t"], df["weighted_coverage"], label=label)
-        axes[2].plot(df["t"], df["task_service"], label=label)
+        style = _style_for_label(label)
+        for idx, column in enumerate(["coverage", "weighted_coverage", "task_service"]):
+            axes[idx].plot(
+                df["t"],
+                df[column],
+                label=label,
+                color=style["color"],
+                linestyle=style["linestyle"],
+                linewidth=2.2,
+            )
 
     axes[0].set_title("Global Coverage")
     axes[1].set_title("Weighted Coverage")
@@ -309,6 +415,7 @@ def plot_policy_timeseries(
     for ax in axes:
         ax.set_xlabel("Timestep")
         ax.legend()
+        ax.grid(alpha=0.18)
     axes[0].set_ylabel("Rate")
 
     save_fig(fig, out_path)

@@ -168,10 +168,11 @@ def _policy_table_html(policy_snapshot: dict[str, Any]) -> str:
     body_rows: list[str] = []
     for idx, row in enumerate(rows):
         cls = " class='is-best'" if idx == 0 else ""
+        badge = "<span class='table-chip'>Top policy</span>" if idx == 0 else ""
         body_rows.append(
             "<tr"
             f"{cls}>"
-            f"<td>{html.escape(strategy_display_name(str(row['strategy'])))}</td>"
+            f"<td><strong>{html.escape(strategy_display_name(str(row['strategy'])))}</strong>{badge}</td>"
             f"<td>{_fmt(_as_float(row, 'mission_fit_score'))}</td>"
             f"<td>{_fmt(_as_float(row, 'avg_task_service_rate'))}</td>"
             f"<td>{_fmt(_as_float(row, 'task_completion_rate'))}</td>"
@@ -180,11 +181,11 @@ def _policy_table_html(policy_snapshot: dict[str, Any]) -> str:
             "</tr>"
         )
     return (
-        "<table><thead><tr>"
-        "<th>Policy</th><th>Mission fit</th><th>Task service</th><th>Completion</th><th>Response time</th><th>What it does</th>"
+        "<div class='table-wrap'><table><thead><tr>"
+        "<th scope='col'>Policy</th><th scope='col'>Mission fit</th><th scope='col'>Task service</th><th scope='col'>Completion</th><th scope='col'>Response time</th><th scope='col'>What it does</th>"
         "</tr></thead><tbody>"
         + "".join(body_rows)
-        + "</tbody></table>"
+        + "</tbody></table></div>"
     )
 
 
@@ -194,10 +195,11 @@ def _demo_table_html(demo_snapshot: dict[str, Any]) -> str:
         return "<p class='empty'>Run the priority demo workflow to populate this section.</p>"
 
     body_rows: list[str] = []
-    for row in rows:
+    for idx, row in enumerate(rows):
+        badge = "<span class='table-chip'>Best sweep row</span>" if idx == 0 else ""
         body_rows.append(
             "<tr>"
-            f"<td>{html.escape(strategy_display_name(str(row['strategy'])))}</td>"
+            f"<td><strong>{html.escape(strategy_display_name(str(row['strategy'])))}</strong>{badge}</td>"
             f"<td>{_as_int(row, 'num_drones')}</td>"
             f"<td>{_as_int(row, 'sensor_radius')}</td>"
             f"<td>{_fmt(_as_float(row, 'mission_fit_score'))}</td>"
@@ -206,11 +208,11 @@ def _demo_table_html(demo_snapshot: dict[str, Any]) -> str:
             "</tr>"
         )
     return (
-        "<table><thead><tr>"
-        "<th>Strategy</th><th>Drones</th><th>Sensor radius</th><th>Mission fit</th><th>Weighted coverage</th><th>Priority persistence</th>"
+        "<div class='table-wrap'><table><thead><tr>"
+        "<th scope='col'>Strategy</th><th scope='col'>Drones</th><th scope='col'>Sensor radius</th><th scope='col'>Mission fit</th><th scope='col'>Weighted coverage</th><th scope='col'>Priority persistence</th>"
         "</tr></thead><tbody>"
         + "".join(body_rows)
-        + "</tbody></table>"
+        + "</tbody></table></div>"
     )
 
 
@@ -223,6 +225,61 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
     best_policy = str(policy_snapshot["best"]["strategy"]) if policy_snapshot["best"] is not None else "priority_patrol"
     mission_overview = _load_mission_overview(repo_root, preferred_policy=best_policy)
     demo_snapshot = _build_demo_snapshot(results_root)
+
+    hero_meta_cards = []
+    for label, value in [
+        ("Fleet", f"{len(mission_overview.assets)} assets"),
+        ("Priority areas", f"{len(mission_overview.zones)} zones"),
+        ("Dynamic tasks", f"{len(mission_overview.tasks)} live tasks"),
+        ("Publishing", "GitHub Pages ready"),
+    ]:
+        hero_meta_cards.append(
+            "<div class='stat-pill'>"
+            f"<span class='stat-label'>{html.escape(label)}</span>"
+            f"<strong>{html.escape(value)}</strong>"
+            "</div>"
+        )
+
+    result_cards: list[str] = []
+    if policy_snapshot["best"] is not None:
+        best = policy_snapshot["best"]
+        ranking = policy_snapshot["ranking"]
+        runner_up = ranking[1] if len(ranking) > 1 else None
+        result_cards.append(
+            "<article class='result-card'>"
+            "<div class='eyebrow-small'>Best current planner</div>"
+            f"<h3>{html.escape(strategy_display_name(str(best['strategy'])))}</h3>"
+            f"<p>{html.escape(_policy_explanation(str(best['strategy'])))}</p>"
+            "<ul class='mini-list'>"
+            f"<li><span>Mission fit</span><strong>{_fmt(_as_float(best, 'mission_fit_score'))}</strong></li>"
+            f"<li><span>Task completion</span><strong>{_fmt(_as_float(best, 'task_completion_rate'))}</strong></li>"
+            "</ul>"
+            "</article>"
+        )
+        if runner_up is not None:
+            delta = _as_float(best, "mission_fit_score") - _as_float(runner_up, "mission_fit_score")
+            result_cards.append(
+                "<article class='result-card'>"
+                "<div class='eyebrow-small'>Lead over runner-up</div>"
+                f"<h3>{_fmt(delta)}</h3>"
+                f"<p>{html.escape(strategy_display_name(str(best['strategy'])))} currently leads {html.escape(strategy_display_name(str(runner_up['strategy'])))} on the overall mission-fit score.</p>"
+                "<ul class='mini-list'>"
+                f"<li><span>Runner-up</span><strong>{html.escape(strategy_display_name(str(runner_up['strategy'])))}</strong></li>"
+                f"<li><span>Response time</span><strong>{_fmt(_as_float(best, 'mean_task_response_time'), digits=2)} steps</strong></li>"
+                "</ul>"
+                "</article>"
+            )
+        result_cards.append(
+            "<article class='result-card'>"
+            "<div class='eyebrow-small'>How to read the win</div>"
+            "<h3>Balance, not just reach</h3>"
+            "<p>The strongest planner is not the one that visits the most cells. It is the one that keeps persistent watch on high-value zones while still reacting quickly to late-arriving tasks.</p>"
+            "<ul class='mini-list'>"
+            f"<li><span>Task service</span><strong>{_fmt(_as_float(best, 'avg_task_service_rate'))}</strong></li>"
+            f"<li><span>Why it stands out</span><strong>Anchors plus responders</strong></li>"
+            "</ul>"
+            "</article>"
+        )
 
     asset_cards = []
     for group in _group_assets(mission_overview):
@@ -237,9 +294,9 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
             f"<h3>{html.escape(group['platform_name'].title())} x{group['count']}</h3>"
             f"<p>{html.escape(group['summary'])}</p>"
             "<ul class='mini-list'>"
-            f"<li>Sensor radius: {group['sensor_radius']}</li>"
-            f"<li>Endurance: {group['endurance_steps']} steps</li>"
-            f"<li>Cruise step size: {group['cruise_step_size']}</li>"
+            f"<li><span>Sensor radius</span><strong>{group['sensor_radius']}</strong></li>"
+            f"<li><span>Endurance</span><strong>{group['endurance_steps']} steps</strong></li>"
+            f"<li><span>Cruise step size</span><strong>{group['cruise_step_size']}</strong></li>"
             "</ul>"
             "</article>"
         )
@@ -252,9 +309,9 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
             f"<h3>{html.escape(zone.name.replace('_', ' ').title())}</h3>"
             f"<p>{html.escape(zone.purpose)}</p>"
             "<ul class='mini-list'>"
-            f"<li>Weight: {_fmt(zone.weight, digits=1)}</li>"
-            f"<li>Centroid: ({zone.centroid_x}, {zone.centroid_y})</li>"
-            f"<li>Area: {zone.area_cells} cells</li>"
+            f"<li><span>Weight</span><strong>{_fmt(zone.weight, digits=1)}</strong></li>"
+            f"<li><span>Centroid</span><strong>({zone.centroid_x}, {zone.centroid_y})</strong></li>"
+            f"<li><span>Area</span><strong>{zone.area_cells} cells</strong></li>"
             "</ul>"
             "</article>"
         )
@@ -268,9 +325,9 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
             f"<h3>{html.escape(task.name.replace('_', ' ').title())}</h3>"
             f"<p>{html.escape(task.purpose)}</p>"
             "<ul class='mini-list'>"
-            f"<li>Priority: {_fmt(task.priority, digits=1)}</li>"
-            f"<li>Window: step {task.start_step} to {task.end_step}</li>"
-            f"<li>Best owner: {html.escape(owner)}</li>"
+            f"<li><span>Priority</span><strong>{_fmt(task.priority, digits=1)}</strong></li>"
+            f"<li><span>Window</span><strong>step {task.start_step} to {task.end_step}</strong></li>"
+            f"<li><span>Best owner</span><strong>{html.escape(owner)}</strong></li>"
             "</ul>"
             "</article>"
         )
@@ -301,7 +358,7 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         rel = _rel(live_demo_root, Path(spec["path"]))
         figures.append(
             "<figure class='evidence'>"
-            f"<img src='{html.escape(rel)}' alt='{html.escape(spec['title'])}'>"
+            f"<img src='{html.escape(rel)}' alt='{html.escape(spec['title'])}' loading='lazy'>"
             f"<figcaption><strong>{html.escape(spec['title'])}</strong><span>{html.escape(spec['caption'])}</span></figcaption>"
             "</figure>"
         )
@@ -321,18 +378,28 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#112430">
+  <meta name="color-scheme" content="light">
   <title>ISR Mission Tasking Demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23112430'/%3E%3Cpath d='M16 45V19h6v26zm13 0V25h6v20zm13 0V13h6v32z' fill='%23f7efe2'/%3E%3C/svg%3E">
   <style>
     :root {{
-      --bg: #f2ece1;
-      --ink: #122631;
-      --muted: #5b696e;
-      --panel: rgba(255, 251, 245, 0.92);
-      --line: rgba(18, 38, 49, 0.12);
-      --accent: #bf5d18;
-      --accent-soft: rgba(191, 93, 24, 0.12);
-      --hero: linear-gradient(145deg, rgba(12, 23, 30, 0.98), rgba(27, 46, 57, 0.9));
-      --shadow: 0 18px 44px rgba(18, 38, 49, 0.12);
+      --bg: #f2ecdf;
+      --bg-deep: #e9dfd0;
+      --ink: #10222d;
+      --muted: #495b65;
+      --panel: rgba(255, 250, 244, 0.9);
+      --panel-strong: rgba(255, 252, 247, 0.98);
+      --line: rgba(16, 34, 45, 0.12);
+      --accent: #7d4c0d;
+      --accent-strong: #5f3707;
+      --accent-soft: rgba(125, 76, 13, 0.11);
+      --hero: linear-gradient(145deg, #0d1c25 0%, #153140 54%, #0f2431 100%);
+      --hero-line: rgba(247, 239, 226, 0.12);
+      --hero-text: #f7efe2;
+      --hero-muted: rgba(247, 239, 226, 0.78);
+      --focus: #0e5f74;
+      --shadow: 0 18px 46px rgba(16, 34, 45, 0.09);
     }}
     * {{
       box-sizing: border-box;
@@ -344,202 +411,362 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
       margin: 0;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(239, 186, 122, 0.18), transparent 34%),
-        linear-gradient(180deg, #f8f3ea 0%, var(--bg) 44%, #ede4d6 100%);
+        radial-gradient(circle at top left, rgba(205, 161, 94, 0.14), transparent 32%),
+        linear-gradient(180deg, #f8f4eb 0%, var(--bg) 48%, var(--bg-deep) 100%);
       font-family: "Avenir Next", "Segoe UI", sans-serif;
+      text-rendering: optimizeLegibility;
+    }}
+    a {{
+      color: var(--accent-strong);
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }}
+    a:focus-visible,
+    button:focus-visible {{
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }}
+    .skip-link {{
+      position: absolute;
+      left: 20px;
+      top: -48px;
+      z-index: 50;
+      background: var(--panel-strong);
+      color: var(--ink);
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      text-decoration: none;
+    }}
+    .skip-link:focus {{
+      top: 18px;
     }}
     .hero {{
-      min-height: 100svh;
-      padding: 28px 24px 42px;
-      color: #f7efe2;
+      min-height: 88svh;
+      padding: 40px 28px 54px;
+      color: var(--hero-text);
       background: var(--hero);
       position: relative;
       overflow: hidden;
+    }}
+    .hero::before {{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to right, transparent 0, transparent calc(100% - 1px), rgba(247, 239, 226, 0.04) calc(100% - 1px)),
+        linear-gradient(to bottom, transparent 0, transparent calc(100% - 1px), rgba(247, 239, 226, 0.04) calc(100% - 1px));
+      background-size: 88px 88px;
+      opacity: 0.35;
+      pointer-events: none;
     }}
     .hero::after {{
       content: "";
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.045) 36%, transparent 62%),
-        radial-gradient(circle at 80% 28%, rgba(255, 205, 138, 0.2), transparent 22%);
+        radial-gradient(circle at 78% 24%, rgba(234, 172, 93, 0.22), transparent 20%),
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.045) 38%, transparent 63%);
       pointer-events: none;
     }}
     .hero-inner,
     main {{
-      max-width: 1200px;
+      max-width: 1120px;
       margin: 0 auto;
     }}
     .hero-inner {{
       position: relative;
       z-index: 1;
-      min-height: calc(100svh - 70px);
+      min-height: calc(88svh - 94px);
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-      gap: 40px;
-      align-items: end;
+      grid-template-columns: minmax(0, 1.06fr) minmax(320px, 0.94fr);
+      gap: 48px;
+      align-items: center;
+    }}
+    .hero-copy {{
+      padding: 24px 0;
     }}
     .eyebrow {{
       text-transform: uppercase;
-      letter-spacing: 0.2em;
-      font-size: 0.78rem;
-      color: rgba(247, 239, 226, 0.72);
+      letter-spacing: 0.22em;
+      font-size: 0.75rem;
+      color: rgba(247, 239, 226, 0.74);
       margin-bottom: 18px;
     }}
     .eyebrow-small {{
       text-transform: uppercase;
       letter-spacing: 0.16em;
-      font-size: 0.74rem;
-      color: var(--accent);
+      font-size: 0.72rem;
+      color: var(--accent-strong);
       margin-bottom: 10px;
+      font-weight: 700;
     }}
     h1, h2, h3 {{
       font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
       margin: 0;
-      line-height: 0.97;
     }}
     h1 {{
-      font-size: clamp(3rem, 7vw, 6.2rem);
-      max-width: 7ch;
-      letter-spacing: -0.04em;
+      font-size: clamp(2.9rem, 6vw, 5.15rem);
+      max-width: 8ch;
+      letter-spacing: -0.045em;
+      line-height: 0.95;
     }}
     h2 {{
-      font-size: clamp(2rem, 4vw, 3rem);
+      font-size: clamp(2rem, 3.7vw, 2.8rem);
+      line-height: 1;
       letter-spacing: -0.03em;
     }}
     h3 {{
-      font-size: 1.35rem;
+      font-size: 1.34rem;
       line-height: 1.15;
     }}
     .hero-copy p,
     .section-head p,
-    .lede {{
+    .lede,
+    .info-card p,
+    .glossary-card p,
+    .result-card p {{
       line-height: 1.7;
-      font-size: 1.04rem;
+      font-size: 1.02rem;
     }}
     .hero-copy p {{
-      color: rgba(247, 239, 226, 0.84);
-      max-width: 40rem;
-      margin-top: 20px;
+      color: var(--hero-muted);
+      max-width: 33rem;
+      margin: 20px 0 0;
     }}
     .actions {{
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 26px;
+      margin-top: 28px;
     }}
     .action {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-height: 46px;
       border-radius: 999px;
       padding: 12px 18px;
       text-decoration: none;
-      color: #f7efe2;
-      border: 1px solid rgba(247, 239, 226, 0.2);
-      transition: transform 180ms ease, background 180ms ease;
+      color: var(--hero-text);
+      border: 1px solid rgba(247, 239, 226, 0.24);
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
     }}
     .action:hover {{
       transform: translateY(-2px);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(247, 239, 226, 0.4);
     }}
     .action-primary {{
-      background: linear-gradient(135deg, #ef9b4d, #bf5d18);
-      color: #1c130d;
+      background: linear-gradient(135deg, #f0ba7b, #b86a1e);
+      color: #1b130d;
       border-color: transparent;
       font-weight: 700;
+    }}
+    .hero-meta {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 30px;
+      max-width: 52rem;
+    }}
+    .stat-pill {{
+      padding: 14px 14px 12px;
+      border-radius: 18px;
+      background: rgba(255, 249, 241, 0.08);
+      border: 1px solid var(--hero-line);
+      display: grid;
+      gap: 6px;
+    }}
+    .stat-label {{
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(247, 239, 226, 0.68);
+    }}
+    .stat-pill strong {{
+      font-size: 1rem;
+      line-height: 1.25;
+      color: var(--hero-text);
     }}
     .hero-panel {{
       background: rgba(255, 248, 238, 0.08);
       border: 1px solid rgba(247, 239, 226, 0.12);
-      border-radius: 28px;
-      padding: 22px;
-      backdrop-filter: blur(8px);
+      border-radius: 30px;
+      padding: 26px 24px 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 40px rgba(3, 8, 12, 0.24);
     }}
     .summary-list,
     .mini-list {{
       margin: 0;
-      padding-left: 18px;
-      line-height: 1.6;
+      line-height: 1.65;
     }}
-    .summary-list li + li,
-    .mini-list li + li {{
-      margin-top: 8px;
+    .summary-list {{
+      padding-left: 18px;
+    }}
+    .summary-list li + li {{
+      margin-top: 10px;
+    }}
+    .mini-list {{
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }}
+    .mini-list li {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }}
+    .mini-list li strong {{
+      color: var(--ink);
+      text-align: right;
+      font-weight: 700;
     }}
     main {{
-      padding: 34px 24px 80px;
+      padding: 44px 28px 96px;
     }}
     .section {{
-      margin-top: 40px;
+      margin-top: 70px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }}
+    .section:first-of-type {{
+      margin-top: 18px;
+    }}
+    .section[id] {{
+      scroll-margin-top: 28px;
     }}
     .section-head {{
       display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-      gap: 24px;
+      grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+      gap: 28px;
       align-items: start;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }}
     .section-head p {{
       margin: 0;
       color: var(--muted);
+      max-width: 42rem;
     }}
-    .grid-3,
+    .asset-grid,
+    .zone-grid,
+    .task-grid,
     .glossary-grid,
-    .figure-grid {{
+    .figure-grid,
+    .results-grid,
+    .table-grid,
+    .hosting-note {{
       display: grid;
       gap: 18px;
     }}
-    .grid-3 {{
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .asset-grid {{
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }}
+    .zone-grid {{
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }}
+    .task-grid {{
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     }}
     .glossary-grid {{
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     }}
-    .figure-grid {{
+    .figure-grid,
+    .table-grid,
+    .hosting-note {{
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }}
+    .results-grid {{
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 18px;
     }}
     .info-card,
     .glossary-card,
     .table-panel,
+    .result-card,
     .evidence {{
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 26px;
+      border-radius: 24px;
       box-shadow: var(--shadow);
     }}
     .info-card,
     .glossary-card,
-    .table-panel {{
-      padding: 20px;
+    .table-panel,
+    .result-card {{
+      padding: 22px;
+    }}
+    .info-card,
+    .glossary-card,
+    .result-card {{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
     }}
     .info-card p,
-    .glossary-card p {{
+    .glossary-card p,
+    .result-card p {{
       color: var(--muted);
-      line-height: 1.65;
+      margin: 0;
+    }}
+    .table-panel h3 {{
+      margin-bottom: 14px;
+    }}
+    .table-wrap {{
+      overflow-x: auto;
     }}
     .table-panel table {{
       width: 100%;
+      min-width: 640px;
       border-collapse: collapse;
       font-size: 0.95rem;
     }}
     .table-panel th,
     .table-panel td {{
       border-bottom: 1px solid var(--line);
-      padding: 11px 8px;
+      padding: 12px 8px;
       text-align: left;
       vertical-align: top;
     }}
     .table-panel th {{
       color: var(--muted);
-      font-weight: 600;
-    }}
-    tr.is-best td:first-child {{
-      color: var(--accent);
       font-weight: 700;
+      white-space: nowrap;
+    }}
+    .table-panel td strong {{
+      display: inline-block;
+      color: var(--ink);
+      font-weight: 700;
+    }}
+    .table-chip {{
+      display: inline-flex;
+      align-items: center;
+      margin-left: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 0.73rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 700;
+      vertical-align: middle;
+    }}
+    tr.is-best td:first-child strong {{
+      color: var(--accent-strong);
     }}
     .evidence {{
       overflow: hidden;
       margin: 0;
+      background: var(--panel-strong);
     }}
     .evidence img {{
       display: block;
@@ -558,30 +785,30 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
       color: var(--ink);
     }}
     .callout {{
-      padding: 18px 20px;
+      max-width: 50rem;
+      padding: 20px 22px 20px 24px;
       border-radius: 22px;
       background: var(--accent-soft);
-      border: 1px solid rgba(191, 93, 24, 0.18);
-      line-height: 1.65;
-      color: #5d3011;
-    }}
-    .hosting-note {{
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: 1px solid rgba(125, 76, 13, 0.18);
+      border-left: 5px solid var(--accent);
+      line-height: 1.7;
+      color: var(--accent-strong);
     }}
     .empty {{
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.65;
     }}
-    @media (max-width: 980px) {{
+    @media (max-width: 1040px) {{
       .hero-inner,
       .section-head,
-      .grid-3,
-      .glossary-grid,
+      .results-grid,
+      .table-grid,
       .figure-grid,
       .hosting-note {{
         grid-template-columns: 1fr;
+      }}
+      .hero-meta {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
       .hero {{
         min-height: auto;
@@ -590,9 +817,37 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         min-height: auto;
       }}
     }}
+    @media (max-width: 720px) {{
+      .hero,
+      main {{
+        padding-left: 18px;
+        padding-right: 18px;
+      }}
+      .hero {{
+        padding-top: 30px;
+        padding-bottom: 40px;
+      }}
+      .hero-meta {{
+        grid-template-columns: 1fr;
+      }}
+      .actions {{
+        flex-direction: column;
+        align-items: stretch;
+      }}
+      .action {{
+        width: 100%;
+      }}
+      .table-panel {{
+        padding: 18px;
+      }}
+      .table-panel table {{
+        min-width: 560px;
+      }}
+    }}
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-copy">
@@ -604,6 +859,9 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
           <a class="action" href="#results">See the policy results</a>
           <a class="action" href="#hosting">Hosting notes</a>
         </div>
+        <div class="hero-meta">
+          {"".join(hero_meta_cards)}
+        </div>
       </div>
       <aside class="hero-panel">
         <div class="eyebrow-small">If you only read one thing</div>
@@ -614,7 +872,7 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
     </div>
   </section>
 
-  <main>
+  <main id="main">
     <section class="section">
       <div class="section-head">
         <div>
@@ -634,7 +892,7 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         </div>
         <p>{html.escape(mission_overview.plain_english_summary)}</p>
       </div>
-      <div class="grid-3">
+      <div class="asset-grid">
         {"".join(asset_cards)}
       </div>
     </section>
@@ -646,7 +904,7 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         </div>
         <p>The planner is not treating the map as equally important everywhere. Some zones matter more, so missing them should hurt the score more.</p>
       </div>
-      <div class="grid-3">
+      <div class="zone-grid">
         {"".join(zone_cards)}
       </div>
     </section>
@@ -658,7 +916,7 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         </div>
         <p>These are the time-varying incidents that appear after the mission starts. A good planner has to react to them without abandoning the persistent-watch areas completely.</p>
       </div>
-      <div class="grid-3">
+      <div class="task-grid">
         {"".join(task_cards)}
       </div>
     </section>
@@ -705,9 +963,12 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         <div>
           <h2>Latest result snapshot</h2>
         </div>
-        <p>The comparison below uses the current saved outputs. The labels are intentionally human-readable so the site feels like a mission brief instead of a notebook dump.</p>
+        <p>The comparison below uses the current saved outputs. The labels are intentionally human-readable so the site feels like a mission brief instead of a notebook dump, and the important states are called out with text badges instead of color alone.</p>
       </div>
-      <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+      <div class="results-grid">
+        {"".join(result_cards)}
+      </div>
+      <div class="table-grid">
         <article class="table-panel">
           <h3>Priority demo sweep</h3>
           {_demo_table_html(demo_snapshot)}
@@ -724,7 +985,7 @@ def build_live_demo_site(repo_root: Path, site_path: Path) -> None:
         <div>
           <h2>What the charts are showing</h2>
         </div>
-        <p>The figures below are the stable assets committed in the repo, so this site stays portable and can be hosted statically without any backend compute.</p>
+        <p>The figures below are the stable assets committed in the repo, so this site stays portable and can be hosted statically without any backend compute. The updated chart palette also uses colorblind-safe colors plus distinct line styles, markers, and labels.</p>
       </div>
       <div class="figure-grid">
         {"".join(figures)}
