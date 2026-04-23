@@ -29,12 +29,25 @@ def _filter_strategy(df: pd.DataFrame, strategy: Optional[str]) -> pd.DataFrame:
     return filtered
 
 
+def _display_strategy_name(strategy: str | None) -> str:
+    if strategy is None:
+        return "all"
+    labels = {
+        "static": "Static plan",
+        "patrol": "Random patrol",
+        "greedy_patrol": "Assignment planner",
+        "assignment_patrol": "Assignment planner",
+        "priority_patrol": "Task-aware planner",
+    }
+    return labels.get(str(strategy), str(strategy).replace("_", " ").title())
+
+
 def _scatter_by_strategy(ax: plt.Axes, df: pd.DataFrame, x: str, y: str) -> None:
     strategies = list(df["strategy"].unique()) if "strategy" in df.columns else [None]
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     for idx, strategy in enumerate(strategies):
         subset = df if strategy is None else df[df["strategy"] == strategy]
-        label = "all" if strategy is None else str(strategy)
+        label = _display_strategy_name(strategy)
         ax.scatter(
             subset[x],
             subset[y],
@@ -230,6 +243,7 @@ def plot_strategy_metric_bars(
         raise ValueError("plot_strategy_metric_bars requires a strategy column.")
 
     summary = agg.groupby("strategy", as_index=False)[metrics].mean(numeric_only=True)
+    summary["strategy_label"] = summary["strategy"].map(_display_strategy_name)
     strategies = list(summary["strategy"])
     x = np.arange(len(strategies))
     width = 0.8 / max(len(metrics), 1)
@@ -239,7 +253,7 @@ def plot_strategy_metric_bars(
         ax.bar(x + idx * width, summary[metric], width=width, label=metric)
 
     ax.set_xticks(x + width * (len(metrics) - 1) / 2)
-    ax.set_xticklabels(strategies)
+    ax.set_xticklabels(list(summary["strategy_label"]))
     ax.set_title(title)
     ax.legend()
 

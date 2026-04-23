@@ -10,12 +10,12 @@ comparison:
   strategies:
     - "static"
     - "patrol"
-    - "greedy_patrol"
+    - "assignment_patrol"
     - "priority_patrol"
 
 dashboard:
-  title: "Dynamic ISR Policy Comparison"
-  subtitle: "Heterogeneous fleet comparison across static basing, random patrol, and task-aware patrol under changing mission demand."
+  title: "Dynamic ISR Tasking Comparison"
+  subtitle: "Static coverage, random patrol, assignment planning, and task-aware planning on a mixed fleet under changing mission demand."
 
 report:
   narrative: "A mixed fleet of long-endurance sentinels and faster scout drones must monitor a border corridor, protect a logistics hub, and respond to time-varying surveillance spikes."

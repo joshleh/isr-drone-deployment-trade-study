@@ -4,13 +4,13 @@ Scenario-based operations analysis of ISR drone fleet deployment under cost, cov
 
 This project evaluates tradeoffs between alternative ISR drone deployment strategies using simulation, parameter sweeps, and decision-relevant metrics. The analysis is structured as a formal trade study, emphasizing transparency, reproducibility, and operational insight rather than model complexity.
 
-This repository is intentionally positioned as a simulation and decision-support project: scenario design, KPI engineering, sweep analysis, and analyst-style reporting.
+This repository is intentionally positioned as a simulation and decision-support project: scenario design, KPI engineering, sweep analysis, analyst-style reporting, and mission-tasking evaluation.
 
 The project now also includes:
 
 - dynamic task arrivals instead of only fixed-area monitoring
 - heterogeneous fleets with mixed endurance, cost, and sensor footprints
-- planner-style and task-aware patrol policy comparison against static basing and random patrol
+- assignment-style and task-aware policy comparison against static basing and random patrol
 - DuckDB and Parquet persistence plus a lightweight static dashboard
 
 ---
@@ -87,13 +87,13 @@ For the more advanced version of the project, run:
 python3 scripts/run_policy_comparison.py
 ```
 
-That workflow compares `static`, `patrol`, and `priority_patrol` policies on a heterogeneous fleet with dynamic surveillance tasks, then writes:
+That workflow compares static coverage, random patrol, an assignment planner, and a task-aware planner on a heterogeneous fleet with dynamic surveillance tasks, then writes:
 
-It now includes a stronger `greedy_patrol` baseline as well, so the project compares:
+It now includes a stronger assignment-style planner as well, so the project compares:
 
 - `static`
 - `patrol`
-- `greedy_patrol`
+- `assignment_patrol`
 - `priority_patrol`
 
 - raw and aggregated CSV outputs
@@ -172,6 +172,17 @@ Detailed project documentation is provided in the `docs/` directory:
 
 ---
 
+## Hosting The Website
+
+The showcase site is static HTML plus committed figures, so GitHub Pages is the best fit for the current version.
+
+- Use **GitHub Pages** if you want a project site, figures, and plain-English walkthrough online.
+- Use **Render** only if you later add a backend such as uploads, API routes, or live simulation runs in the browser.
+
+Once this branch is merged, you can point GitHub Pages at the `docs/` folder and host the site without any server code.
+
+---
+
 ## Anduril Relevance
 
 This project fits most naturally for:
@@ -180,10 +191,10 @@ This project fits most naturally for:
 - **Data Scientist**: experiment design, metric engineering, simulation-backed analysis, priority-weighted evaluation, policy scoring
 - **Data Engineer**: reproducible configs, sweep pipelines, DuckDB and Parquet persistence, dashboard-oriented result generation
 
-It is less of a direct **MLE** repo and more of an evaluation layer for planners, routing policies, and autonomy systems.
+It is less of a direct **MLE** repo and more of a mission-tasking and evaluation layer for planners, routing policies, and autonomy systems.
 
 The new `priority_patrol` comparison makes that framing much stronger because the repo now evaluates alternative policies under dynamic demand rather than only measuring static geometry.
-The added `greedy_patrol` baseline also makes the comparison feel more serious and less like a hand-picked heuristic demo.
+The added assignment-style baseline also makes the comparison feel more serious and less like a hand-picked heuristic demo.
 
 ---
 

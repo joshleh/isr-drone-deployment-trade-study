@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import time
 from pathlib import Path
@@ -15,6 +16,7 @@ bootstrap_src_path()
 from anduril_ops.analytics.storage import persist_tables_to_duckdb
 from anduril_ops.dashboard.html import build_static_dashboard
 from anduril_ops.io.config import build_objects_from_cfg, load_yaml
+from anduril_ops.mission.briefing import build_mission_overview, strategy_display_name
 from anduril_ops.sim.monte_carlo import run_simulation
 from anduril_ops.utils.seed import make_rng
 from anduril_ops.viz.plots import (
@@ -82,7 +84,7 @@ def build_dashboard_tables(agg: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     response_gain_value = f"{response_gain:.2f}" if math.isfinite(float(response_gain)) else "n/a"
     summary = pd.DataFrame(
         [
-            {"metric": "Best Policy", "value": str(best["strategy"])},
+            {"metric": "Best Policy", "value": strategy_display_name(str(best["strategy"]))},
             {"metric": "Mission-Fit Score", "value": f"{best['mission_fit_score']:.3f}"},
             {"metric": "Task Completion", "value": f"{best['task_completion_rate']:.3f}"},
             {"metric": "Avg Task Service", "value": f"{best['avg_task_service_rate']:.3f}"},
@@ -102,7 +104,8 @@ def build_dashboard_tables(agg: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
             "mean_task_response_time",
             "coverage_efficiency",
         ]
-    ].sort_values("mission_fit_score", ascending=False)
+    ].sort_values("mission_fit_score", ascending=False).copy()
+    top["strategy"] = top["strategy"].map(lambda value: strategy_display_name(str(value)))
     return summary, top
 
 
@@ -126,19 +129,26 @@ def write_report(report_path: Path, narrative: str, agg: pd.DataFrame) -> None:
     best = ranked.iloc[0]
     static_row = ranked[ranked["strategy"] == "static"].iloc[0] if "static" in set(ranked["strategy"]) else best
     patrol_row = ranked[ranked["strategy"] == "patrol"].iloc[0] if "patrol" in set(ranked["strategy"]) else best
-    greedy_row = ranked[ranked["strategy"] == "greedy_patrol"].iloc[0] if "greedy_patrol" in set(ranked["strategy"]) else best
+    assignment_row = (
+        ranked[ranked["strategy"].isin(["assignment_patrol", "greedy_patrol"])].iloc[0]
+        if set(ranked["strategy"]).intersection({"assignment_patrol", "greedy_patrol"})
+        else best
+    )
     priority_row = ranked[ranked["strategy"] == "priority_patrol"].iloc[0] if "priority_patrol" in set(ranked["strategy"]) else best
-    if priority_row["avg_task_service_rate"] >= greedy_row["avg_task_service_rate"]:
+    if priority_row["avg_task_service_rate"] >= assignment_row["avg_task_service_rate"]:
         priority_vs_greedy = (
-            f"`priority_patrol` improves average task service from `{greedy_row['avg_task_service_rate']:.3f}` "
-            f"to `{priority_row['avg_task_service_rate']:.3f}` relative to the greedy planner."
+            f"`priority_patrol` improves average task service from `{assignment_row['avg_task_service_rate']:.3f}` "
+            f"to `{priority_row['avg_task_service_rate']:.3f}` relative to the assignment planner."
         )
     else:
         priority_vs_greedy = (
-            f"`priority_patrol` stays below the greedy planner on pure task service "
-            f"(`{priority_row['avg_task_service_rate']:.3f}` vs `{greedy_row['avg_task_service_rate']:.3f}`), "
+            f"`priority_patrol` stays below the assignment planner on pure task service "
+            f"(`{priority_row['avg_task_service_rate']:.3f}` vs `{assignment_row['avg_task_service_rate']:.3f}`), "
             "but it remains much stronger than random patrol while preserving a more interpretable anchor-and-respond behavior."
         )
+
+    ranked_display = ranked.copy()
+    ranked_display["strategy"] = ranked_display["strategy"].map(strategy_display_name)
 
     report = f"""# Dynamic Policy Comparison Brief
 
@@ -148,14 +158,14 @@ def write_report(report_path: Path, narrative: str, agg: pd.DataFrame) -> None:
 
 ## Ranking
 
-{format_markdown_table(ranked[['strategy', 'mission_fit_score', 'final_weighted_coverage', 'avg_task_service_rate', 'task_completion_rate', 'mean_task_response_time', 'coverage_efficiency']])}
+{format_markdown_table(ranked_display[['strategy', 'mission_fit_score', 'final_weighted_coverage', 'avg_task_service_rate', 'task_completion_rate', 'mean_task_response_time', 'coverage_efficiency']])}
 
 ## Key Takeaways
 
-- Best overall policy: `{best['strategy']}` with mission-fit score `{best['mission_fit_score']:.3f}`.
+- Best overall policy: `{strategy_display_name(str(best['strategy']))}` with mission-fit score `{best['mission_fit_score']:.3f}`.
 - Static basing keeps perfect persistence over what it already watches, but it under-serves dynamic tasks once demand shifts.
 - Random patrol broadens reach, but it is less disciplined about task response than the planner-style baselines.
-- `greedy_patrol` provides the stronger non-random baseline by explicitly assigning drones to targets each step.
+- `assignment_patrol` provides the stronger non-random baseline by explicitly assigning drones to targets each step.
 - `priority_patrol` improves average task service from `{patrol_row['avg_task_service_rate']:.3f}` to `{priority_row['avg_task_service_rate']:.3f}` relative to random patrol.
 - {priority_vs_greedy}
 - The heterogeneous fleet matters: slower long-endurance sentinels anchor persistent regions while faster scouts absorb the time-varying task spikes.
@@ -297,11 +307,17 @@ def main() -> None:
     timeseries_by_label: dict[str, pd.DataFrame] = {}
     for strategy_type in strategies:
         best_row = raw[raw["strategy"] == strategy_type].sort_values("mission_fit_score", ascending=False).iloc[0]
-        label = f"{strategy_type} (seed {int(best_row['seed'])})"
+        label = f"{strategy_display_name(strategy_type)} (seed {int(best_row['seed'])})"
         series = rerun_timeseries(base_cfg, strategy_type, int(best_row["seed"]))
         timeseries_by_label[label] = series
         series.to_csv(out_dir / f"{strategy_type}_best_timeseries.csv", index=False)
     plot_policy_timeseries(timeseries_by_label, out_path=timeseries_figure)
+
+    reference_scenario, _, _, _ = build_objects_from_cfg(base_cfg)
+    preferred_policy = str(agg.sort_values("mission_fit_score", ascending=False).iloc[0]["strategy"])
+    mission_overview = build_mission_overview(reference_scenario, preferred_policy=preferred_policy)
+    mission_overview_path = out_dir / "mission_overview.json"
+    mission_overview_path.write_text(json.dumps(mission_overview.to_dict(), indent=2), encoding="utf-8")
 
     dashboard_summary, dashboard_top = build_dashboard_tables(agg)
     persist_tables_to_duckdb(
@@ -331,6 +347,7 @@ def main() -> None:
 
     print(f"Saved raw results to: {raw_path.resolve()}")
     print(f"Saved aggregated results to: {agg_path.resolve()}")
+    print(f"Saved mission overview to: {mission_overview_path.resolve()}")
     print(f"Saved dashboard to: {dashboard_path.resolve()}")
     print(f"Saved report to: {report_path.resolve()}")
 

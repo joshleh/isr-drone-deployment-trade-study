@@ -421,7 +421,7 @@ def run_simulation(
             for drone in drones:
                 if drone.active:
                     _step_patrol(drone, float(strategy.patrol_turn_prob), width, height, rng)
-        elif strategy.type in {"priority_patrol", "greedy_patrol"}:
+        elif strategy.type in {"priority_patrol", "greedy_patrol", "assignment_patrol"}:
             active_drone_indices = [idx for idx, drone in enumerate(drones) if drone.active]
             active_drones = [drones[idx] for idx in active_drone_indices]
             candidates = _build_candidate_targets(

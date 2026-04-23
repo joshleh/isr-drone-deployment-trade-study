@@ -14,7 +14,7 @@ Use a Python `3.10+` environment. Do not change the machine's global default Pyt
 
 - A heterogeneous fleet with long-endurance `sentinel` drones and faster `scout` drones
 - Time-varying surveillance tasks that appear and expire during the mission
-- A stronger `greedy_patrol` baseline that assigns drones to targets each step
+- A stronger `assignment_patrol` baseline that assigns drones to targets each step
 - A `priority_patrol` policy that reacts to active tasks and priority zones
 - A lightweight `Makefile` so the main workflows can be run with `make test`, `make demo`, and `make policy` while still pointing `PYTHON` at a 3.10+ interpreter when needed
 - Policy scoring that can favor dynamic response rather than only global reach

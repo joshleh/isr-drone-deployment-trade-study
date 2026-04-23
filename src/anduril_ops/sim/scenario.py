@@ -71,7 +71,7 @@ class Scenario:
 
 @dataclass(frozen=True)
 class StrategySpec:
-    type: str  # "static", "patrol", "priority_patrol", or "greedy_patrol"
+    type: str  # "static", "patrol", "priority_patrol", "assignment_patrol", or "greedy_patrol"
     static_points: Optional[List[Tuple[int, int]]] = None
     patrol_step_size: int = 1
     patrol_turn_prob: float = 0.25

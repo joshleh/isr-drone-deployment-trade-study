@@ -104,7 +104,7 @@ def build_objects_from_cfg(cfg: dict) -> Tuple[Scenario, StrategySpec, int, str]
                 point_mode=str(static_cfg.get("point_mode", "explicit")),
             ),
         )
-    elif st["type"] in {"patrol", "priority_patrol", "greedy_patrol"}:
+    elif st["type"] in {"patrol", "priority_patrol", "greedy_patrol", "assignment_patrol"}:
         patrol_cfg = st["patrol"]
         strategy = StrategySpec(
             type=str(st["type"]),
