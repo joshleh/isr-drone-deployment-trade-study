@@ -21,6 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
