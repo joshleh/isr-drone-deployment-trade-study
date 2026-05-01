@@ -11,10 +11,10 @@ from _bootstrap import bootstrap_src_path
 
 bootstrap_src_path()
 
-from anduril_ops.analytics.storage import persist_tables_to_duckdb
-from anduril_ops.io.config import build_objects_from_cfg, load_yaml, override_factors
-from anduril_ops.utils.seed import make_rng
-from anduril_ops.sim.monte_carlo import run_simulation
+from isr_trade_study.analytics.storage import persist_tables_to_duckdb
+from isr_trade_study.io.config import build_objects_from_cfg, load_yaml, override_factors
+from isr_trade_study.utils.seed import make_rng
+from isr_trade_study.sim.monte_carlo import run_simulation
 
 
 def main() -> None:

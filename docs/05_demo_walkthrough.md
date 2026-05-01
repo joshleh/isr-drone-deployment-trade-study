@@ -1,31 +1,36 @@
 # Demo Walkthrough
 
-This repository now includes a one-command demo scenario that is intentionally different from the `aerotrack` project. Instead of serving an ML API, the demo behaves like a compact decision-support artifact: it runs a priority-weighted trade study, exports comparison figures, and writes a short analyst brief.
+The repository ships with a one-command priority-weighted trade-study demo. Instead of serving an ML API, the demo behaves like a compact decision-support artifact: it runs a sweep, exports comparison figures, writes a short analyst brief, and feeds the live-demo viewer.
 
 ## Command
 
 ```bash
-python3 scripts/run_demo.py
+python scripts/run_demo.py
 ```
 
-Use a Python `3.10+` interpreter. If your default `python3` is older, point the command at a newer environment.
+Use Python 3.10+. The Makefile target `make demo` is the equivalent invocation.
 
-## What The Demo Shows
+## What the demo shows
 
-- A border corridor that matters, but not as much as the downstream ingress lane
-- A logistics hub with the highest mission weight
-- Static and patrol strategies evaluated across the same fleet-size and sensor-radius sweep
-- Weighted coverage, priority-cell coverage, revisit behavior, and redundancy
+- A border corridor that matters but takes second priority to a downstream ingress lane.
+- A logistics hub that carries the highest mission weight.
+- Static and patrol strategies evaluated across the same fleet-size and sensor-radius sweep.
+- Weighted coverage, priority-cell coverage, revisit behavior, and redundancy alongside a `mission_fit_score` ranking.
 
-For the expanded project version, the separate `run_policy_comparison.py` workflow adds dynamic tasks, heterogeneous fleets, DuckDB persistence, and a dashboard.
+For the heterogeneous fleet, dynamic-task version of the analysis, see [07_dynamic_policy_comparison.md](07_dynamic_policy_comparison.md).
 
 ## Outputs
 
-- Stable demo figures are written to `docs/figures/`
-- Timestamped CSVs and the generated brief are written to `results/demo/`
+- Stable showcase figures land in `docs/figures/` (these back the live-demo gallery and the README).
+- Timestamped CSVs and the generated brief land in `results/demo/<run-id>/`.
+- The latest run is automatically picked up by the live-demo viewer (`make live-demo`).
 
-## Why This Demo Is Better Than The Original Baseline
+## Reading the brief
 
-- It avoids flat utilization-driven visuals by emphasizing weighted coverage and redundancy
-- It frames the study around mission priorities instead of coverage on a blank grid
-- It makes strategy tradeoffs easier to narrate in an interview or portfolio walkthrough
+The generated `demo_report.md` contains:
+
+- The narrative for the run (configurable in `configs/sweeps/demo_priority_trade_study.yaml`).
+- A top-5 configuration table ranked by `mission_fit_score`.
+- A short take on the static-vs-patrol tradeoff for the chosen scenario.
+
+`mission_fit_score` is intentionally a demo-grade ranking aid, not a normative metric — its weights are configurable and live alongside the run.

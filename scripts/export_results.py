@@ -8,7 +8,7 @@ from _bootstrap import bootstrap_src_path
 
 bootstrap_src_path()
 
-from anduril_ops.viz.plots import (
+from isr_trade_study.viz.plots import (
     plot_coverage_heatmap,
     plot_coverage_efficiency_by_fleet,
     plot_cost_vs_coverage,

@@ -1,121 +1,67 @@
-# ISR Drone Deployment Trade Study  
-## Modeling Assumptions
+# Modeling Assumptions
 
-### 1. Purpose of Assumptions
+These assumptions intentionally simplify the operational environment while preserving the drivers of the static-vs-patrol-vs-task-aware tradeoff. Each section lists what is modeled and what is deferred.
 
-The purpose of this document is to clearly state the modeling assumptions used in the ISR drone deployment trade study. These assumptions are intended to simplify the operational environment while preserving the key drivers of tradeoffs between coverage, persistence, cost, and risk.
+## Operational environment
 
-Explicit documentation of assumptions improves transparency, supports reproducibility, and enables future extensions or sensitivity analysis.
+- The operational area is a 2D grid with fixed boundaries.
+- The environment is static within each run; weather, terrain, and adversary dynamics are not simulated.
+- All cells are equally observable unless they sit inside a declared priority zone (which only changes their *weight*, not their visibility).
 
----
+## Drone platforms
 
-### 2. Operational Environment
+Each drone has:
 
-- The operational area is modeled as a two-dimensional region with fixed boundaries.
-- The environment is assumed to be static over the duration of each simulation run.
-- Terrain, weather, and adversary dynamics are not explicitly modeled in the baseline analysis.
-- All regions within the operational area are assumed to be equally observable unless otherwise specified.
+- A fixed sensor footprint (disk of integer radius).
+- A fixed endurance budget in timesteps.
+- A fixed cost per active timestep.
+- A fixed cruise step size.
 
----
+Heterogeneous fleets are supported: each platform type sets its own sensor radius, endurance, cost, and step size. The dynamic-policy workflow uses this to model a long-endurance `sentinel` plus a faster `scout`.
 
-### 3. Drone Platform Assumptions
+## Sensor and coverage model
 
-Each ISR drone in the fleet is assumed to have homogeneous capabilities:
+- Within the sensor footprint, coverage is binary: a cell is either observed or not on a given step.
+- Sensor performance does not degrade with distance, time, or environmental conditions.
+- Overlapping coverage produces no extra benefit, but it *is* tracked through the redundancy ratio so the cost of overlap is visible.
 
-- Fixed cruise speed and operating altitude
-- Fixed sensor footprint with circular or rectangular coverage area
-- Fixed endurance (maximum mission time per sortie)
-- Fixed operational cost per unit time
-- Identical reliability and availability across the fleet
+## Time and movement
 
-Heterogeneous drone fleets may be considered in future extensions.
+- Time is discretized; one observation pass per drone per step.
+- Drones operate continuously up to their endurance limit, then go inactive.
+- Patrol policies use random walk with a configurable turn probability.
+- Greedy and task-aware planners pick a target each step from a candidate set built from active tasks, priority zones, and unseen cells.
+- Launch, recovery, transit, and deconfliction are handled outside the model.
 
----
+## Cost model
 
-### 4. Sensor and Coverage Model
+- Operational cost is linear in active drone-steps.
+- Acquisition, maintenance, and logistics are not split out — they are folded into `cost_per_step`.
+- This focuses the trade study on marginal operational decisions.
 
-- A drone provides full coverage within its sensor footprint.
-- Sensor performance does not degrade with distance or time.
-- Coverage is binary at the baseline level (covered vs. not covered).
-- Overlapping sensor coverage does not provide additional benefit unless explicitly modeled.
+## Risk representation
 
-This simplified sensor model enables clear interpretation of coverage and persistence metrics.
+- Risk is captured indirectly through proxy metrics: revisit gaps, redundancy ratio, response time, and uncovered weighted area.
+- Adversary action, attrition, and platform failures are not simulated.
 
----
+## Constraints enforced
 
-### 5. Temporal Modeling
+- Total drones available.
+- Per-drone endurance.
+- Operational area boundaries.
+- Mission time horizon.
+- Priority and task definitions from the YAML config.
 
-- Time is discretized into fixed-length steps.
-- Drone movement, coverage, and metric updates occur at each time step.
-- Mission duration is finite and defined per scenario.
-- Drones are assumed to operate continuously until endurance limits are reached.
+## Known limitations
 
----
+- Simplified geometry and binary sensor model.
+- No adversarial behavior or attrition.
+- Linear cost structure.
+- Probabilistic patrol uses random walk; structured sweeps are not yet modeled.
 
-### 6. Deployment and Movement
+## Planned extensions
 
-- Drone deployment strategies are predefined per scenario.
-- Drones follow predefined movement or patrol policies, which may include stochastic behavior.
-- Collision avoidance and deconfliction are assumed to be handled externally.
-- Launch, recovery, and transit delays are not explicitly modeled.
-
----
-
-### 7. Cost Modeling
-
-- Operational cost is modeled as a linear function of drone operating time.
-- Acquisition and sunk costs are excluded from the baseline analysis.
-- Maintenance and logistics costs are aggregated into the operational cost term.
-
-This approach focuses the trade study on marginal operational decisions.
-
----
-
-### 8. Risk Representation
-
-- Risk is represented using proxy metrics rather than explicit threat modeling.
-- Examples of risk proxies include:
-  - Low revisit rates over critical regions
-  - High utilization with limited redundancy
-  - Large uncovered areas over time
-- Adversary action, attrition, and failure modes are not explicitly simulated.
-
----
-
-### 9. Constraints
-
-The baseline model enforces the following constraints:
-
-- Maximum number of available drones
-- Drone endurance limits
-- Operational area boundaries
-- Mission time horizon
-
-Additional constraints may be introduced in later scenarios.
-
----
-
-### 10. Limitations
-
-The following limitations are acknowledged:
-
-- Simplified geometry and sensor models
-- Absence of adversarial behavior
-- Homogeneous fleet assumption
-- Linear cost structure
-
-These limitations are intentional and will be revisited as the model evolves.
-
----
-
-### 11. Path to Model Extension
-
-Future extensions may include:
-
-- Heterogeneous drone fleets
-- Probabilistic sensor performance
-- Dynamic tasking and replanning
-- Adversarial and environmental effects
-- Nonlinear cost and risk functions
-
-Each extension will be evaluated against the baseline to assess incremental value and complexity.
+- Probabilistic sensor performance (range or angle dependent).
+- Structured sweep / sector-based patrol policies.
+- Optimization-backed routing benchmark sharing the same harness.
+- Dynamic adversary behaviors and attrition for risk-explicit scoring.

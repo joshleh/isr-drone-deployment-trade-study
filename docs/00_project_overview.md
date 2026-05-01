@@ -1,96 +1,39 @@
-# ISR Drone Deployment Trade Study  
-## Project Overview
+# Project Overview
 
-### 1. Overview
+A scenario-based trade study that evaluates ISR drone deployment policies under coverage, persistence, cost, and dynamic-tasking constraints. The goal is decision support, not a single optimal solution.
 
-This project presents a scenario-based trade study evaluating alternative deployment strategies for an Intelligence, Surveillance, and Reconnaissance (ISR) drone fleet. The analysis focuses on how different deployment decisions affect coverage, persistence, cost, utilization, and operational risk under realistic constraints.
+## What the project does
 
-The study is designed to support operational decision-making by quantifying tradeoffs between competing objectives and identifying deployment strategies that perform well across a range of scenarios.
+- Simulates static, random-patrol, greedy, and task-aware patrol policies on configurable scenarios.
+- Scores each policy on coverage, weighted coverage, persistence, redundancy, task service, and response time.
+- Produces reproducible analyst briefs, stable showcase figures, and a static HTML dashboard per run.
+- Persists every run in CSV, Parquet, and DuckDB so the same outputs feed BI tools, notebooks, or future ML evaluation.
 
----
+## How it is structured
 
-### 2. Motivation
+| Layer | Purpose |
+| --- | --- |
+| `configs/` | Scenario, sweep, and policy-comparison YAMLs. |
+| `src/isr_trade_study/sim/` | Scenario types and the Monte Carlo runner. |
+| `src/isr_trade_study/io/` | YAML config loading. |
+| `src/isr_trade_study/analytics/` | DuckDB + Parquet persistence. |
+| `src/isr_trade_study/dashboard/` | Per-run dashboard and live-demo HTML generation. |
+| `src/isr_trade_study/viz/` | Matplotlib helpers shared by all reports. |
+| `scripts/` | One-command entrypoints (`run_demo.py`, `run_policy_comparison.py`, etc.). |
+| `docs/` | Problem statement, assumptions, experiments plan, results, walkthroughs. |
+| `docs/live_demo/` | Generated live demo (auto-built via `make live-demo`). |
 
-Unmanned ISR platforms are increasingly used to provide persistent situational awareness across diverse operational environments. While ISR drones offer significant advantages in cost and flexibility, their effectiveness depends heavily on how limited assets are allocated and deployed.
+## Scope
 
-Operational planners must routinely make decisions under uncertainty, balancing mission requirements against resource and cost constraints. This project addresses that need by providing a structured analytical framework for comparing ISR deployment options in a transparent and reproducible manner.
+- 2D grid scenarios with priority zones and dynamic tasks.
+- Homogeneous or heterogeneous fleets defined declaratively in YAML.
+- Configurable mission length, sensor radius, endurance, and patrol policy parameters.
+- Deterministic seeding so every run is reproducible.
 
----
+## What this project is **not**
 
-### 3. Analytical Approach
+- Not a real-time C2 system.
+- Not an ML model or training pipeline (see [AeroTrack](https://github.com/joshleh/aerotrack) for that).
+- Not a sensor-fusion math library (see [FusionTrack](https://github.com/joshleh/fusiontrack)).
 
-The trade study follows a structured workflow:
-
-1. Define operational scenarios and assumptions  
-2. Simulate ISR drone deployments under each scenario  
-3. Evaluate performance using standardized metrics  
-4. Compare outcomes across deployment strategies  
-5. Identify key tradeoffs and decision-relevant insights  
-
-The analysis emphasizes interpretability and traceability over model complexity.
-
----
-
-### 4. Scope
-
-The baseline analysis considers:
-- A homogeneous ISR drone fleet
-- Simplified sensor and coverage models
-- Fixed operational areas and mission durations
-- Scenario-driven deployment strategies
-
-The model is intentionally scoped to enable rapid iteration and clear interpretation. More complex dynamics are deferred to future extensions.
-
----
-
-### 5. Key Outputs
-
-The primary outputs of this project include:
-- Quantitative performance metrics for each deployment strategy
-- Tradeoff comparisons across scenarios
-- Visualizations supporting decision-making
-- Documented assumptions and limitations
-
-These outputs are intended to inform ISR deployment planning rather than produce a single prescriptive solution.
-
----
-
-### 6. Reproducibility and Transparency
-
-All assumptions, scenarios, and experimental parameters are explicitly documented. Simulation runs are traceable to configuration files and code versions, enabling reproducibility and future modification.
-
-The project is implemented in Python to support rapid development and clarity. Performance-critical components may later be accelerated using C++.
-
----
-
-### 7. Intended Audience
-
-This project is intended for:
-- Operations analysts and systems analysts
-- Program managers and operational planners
-- Decision-makers evaluating ISR deployment tradeoffs
-
-It is not intended as a tactical or real-time command-and-control system.
-
----
-
-### 8. Project Status
-
-The baseline simulation and initial trade study experiments have been implemented and executed. Results comparing static and patrol deployment strategies have been analyzed and documented. The project is now in a refinement and extension phase, focusing on additional metrics, alternative patrol policies, and performance optimization.
-
----
-
-### 9. Next Steps
-
-Planned next steps include:
-- Evaluation of alternative patrol policies that explicitly balance coverage and persistence objectives
-- Introduction of additional persistence-focused metrics and mission-specific thresholds
-- Sensitivity analysis with respect to mission duration and operational area size
-- Identification of Pareto-efficient deployment strategies across competing objectives
-- Performance optimization of simulation bottlenecks, including selective C++ acceleration of core sensing and coverage computations
-
----
-
-### 10. Summary
-
-This project provides a structured, scenario-driven approach to evaluating ISR drone deployment strategies. By emphasizing transparency, tradeoffs, and decision relevance, the trade study aims to support informed ISR planning under operational constraints.
+This repo is the analytical layer that sits next to those: scenarios, KPIs, sweeps, and analyst-style reporting on top of a small Monte Carlo simulation.

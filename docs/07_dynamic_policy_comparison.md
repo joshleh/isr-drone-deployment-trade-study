@@ -1,44 +1,46 @@
 # Dynamic Policy Comparison
 
-This project now includes an expanded workflow that moves beyond static trade studies into dynamic, policy-aware evaluation.
+The dynamic policy workflow extends the static trade study into a four-policy comparison on a heterogeneous fleet under time-varying surveillance demand.
 
 ## Command
 
 ```bash
-python3 scripts/run_policy_comparison.py
+python scripts/run_policy_comparison.py
 ```
 
-Use a Python `3.10+` environment. Do not change the machine's global default Python just for this project.
+Or `make policy`. Use Python 3.10+.
 
-## What It Adds
+## What it adds over the static demo
 
-- A heterogeneous fleet with long-endurance `sentinel` drones and faster `scout` drones
-- Time-varying surveillance tasks that appear and expire during the mission
-- A stronger `greedy_patrol` baseline that assigns drones to targets each step
-- A `priority_patrol` policy that reacts to active tasks and priority zones
-- A lightweight `Makefile` so the main workflows can be run with `make test`, `make demo`, and `make policy` while still pointing `PYTHON` at a 3.10+ interpreter when needed
-- Policy scoring that can favor dynamic response rather than only global reach
-- Persisted results in CSV, Parquet, and DuckDB
-- A static HTML dashboard suitable for portfolio review
+- A heterogeneous fleet with long-endurance `sentinel` drones and faster `scout` drones (`configs/advanced_ops_base.yaml`).
+- Time-varying surveillance tasks that appear and expire during the mission.
+- Four policies compared head-to-head:
+  - `static` — fixed loiter points.
+  - `patrol` — random-walk patrol.
+  - `greedy_patrol` — assigns each drone to the highest-utility candidate every step.
+  - `priority_patrol` — task-aware planner with target commitment and platform-aware fit.
+- Composite scoring that weights task service, response time, and weighted coverage.
+- Persistence of every run in CSV, Parquet, and DuckDB.
+- A static HTML dashboard generated next to the run.
 
-## Output Artifacts
+## Output artifacts
 
-Running the command writes a timestamped directory under `results/policy/` containing:
+Every run drops a timestamped folder under `results/policy/`:
 
-- `policy_results_raw.csv`
-- `policy_results_agg.csv`
-- `analysis.duckdb`
-- corresponding Parquet tables
-- `dashboard.html`
-- `policy_report.md`
+| File | Purpose |
+| --- | --- |
+| `policy_results_raw.csv` | One row per individual run (all seeds). |
+| `policy_results_agg.csv` | Mean across runs, grouped by strategy and fleet mix. |
+| `analysis.duckdb` | DuckDB database holding the same tables. |
+| `*.parquet` | Parquet copies for downstream BI/notebooks. |
+| `dashboard.html` | Static dashboard sharing the live-demo theme. |
+| `policy_report.md` | Markdown brief for the run. |
 
-Stable figures are also written to `docs/figures/`.
+Stable plots land in `docs/figures/policy_dynamic_*` and back the live-demo gallery.
 
-## Why This Matters
+## Why this layer matters
 
-This workflow makes the project more relevant to:
-
-- operations analysis, because it compares policy behavior under mission shifts
-- data science, because it formalizes dynamic-response KPIs and composite policy scoring
-- data engineering, because it persists experiment outputs into analytics-friendly storage instead of leaving them as ad hoc CSVs
-- autonomy evaluation, because it creates a harness that could later compare heuristic, optimized, or learned policies
+- Operations analysis: compares policy behavior under mission shifts, not just static geometry.
+- Data science: formalizes dynamic-response KPIs and a composite scoring surface.
+- Data engineering: persists experiment outputs in analytics-friendly storage instead of ad hoc CSVs.
+- Autonomy evaluation: provides a harness that can later score optimization-based or learned routing policies against the same heuristics.

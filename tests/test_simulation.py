@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from anduril_ops.sim.monte_carlo import run_simulation
-from anduril_ops.sim.placements import resolve_static_points
-from anduril_ops.sim.scenario import (
+from isr_trade_study.sim.monte_carlo import run_simulation
+from isr_trade_study.sim.placements import resolve_static_points
+from isr_trade_study.sim.scenario import (
     DynamicTask,
     FleetSpec,
     GridSpec,
@@ -13,7 +13,7 @@ from anduril_ops.sim.scenario import (
     StrategySpec,
     TimeSpec,
 )
-from anduril_ops.utils.seed import make_rng
+from isr_trade_study.utils.seed import make_rng
 
 
 class SimulationTests(unittest.TestCase):

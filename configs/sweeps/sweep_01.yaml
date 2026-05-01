@@ -12,6 +12,6 @@ sweep:
     fleet_sizes: [2, 4, 6, 8, 10]
     sensor_radii: [2, 4, 6, 8]
 
-  # Optional: override strategy type for the sweep
-  # If omitted, uses strategy from base_config.
-  # strategy_type: "static"   # or "patrol"
+  # Run both strategies for the same fleet x radius grid so the static-vs-patrol
+  # comparison falls out of one sweep instead of two.
+  strategy_types: ["static", "patrol"]

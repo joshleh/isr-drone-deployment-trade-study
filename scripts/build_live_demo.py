@@ -7,7 +7,7 @@ from _bootstrap import bootstrap_src_path
 
 repo_root = bootstrap_src_path()
 
-from anduril_ops.dashboard.live_demo import build_live_demo_site
+from isr_trade_study.dashboard.live_demo import build_live_demo_site
 
 
 def main() -> None:

@@ -1,151 +1,53 @@
-# ISR Drone Deployment Trade Study  
-## Experiments Plan
+# Experiments Plan
 
-### 1. Objective
+The experimental program is structured as a small set of reproducible workflows. Each one is configured by a YAML file under `configs/` and produces stable showcase figures plus per-run artifacts under `results/`.
 
-The objective of this experiments plan is to define a structured approach for evaluating ISR drone deployment strategies under varying operational conditions. The experiments are designed to quantify tradeoffs between coverage, persistence, cost, utilization, and operational behavior across multiple scenarios.
+## Workflows
 
-This document distinguishes between experiments that have been executed and analyzed, and extensions that are planned for future work.
+| Workflow | Entrypoint | Configs | Purpose |
+| --- | --- | --- | --- |
+| Baseline single run | `scripts/run_pipeline.py` | `configs/base.yaml` | Smoke run for development. |
+| Parameter sweep | `scripts/run_sweep.py` | `configs/sweeps/sweep_01.yaml` | Sweep fleet size and sensor radius for both static and patrol strategies side by side. |
+| Priority-weighted demo | `scripts/run_demo.py` | `configs/sweeps/demo_priority_trade_study.yaml` | Static vs patrol on a priority-weighted scenario; emits the analyst brief and the live-demo demo block. |
+| Dynamic policy comparison | `scripts/run_policy_comparison.py` | `configs/policy_comparison_heterogeneous.yaml` | Static / random / greedy / task-aware patrol on a heterogeneous fleet under dynamic tasks. |
+| Live demo build | `scripts/build_live_demo.py` | reads `results/` | Renders the static `docs/live_demo/index.html` from the latest local artifacts. |
 
----
+## Experimental factors
 
-## Part I — Executed Experiments
+- **Fleet size** — typically 2 / 4 / 6 / 8 / 10 in the parameter sweeps, 3 / 6 / 9 in the priority demo.
+- **Sensor radius** — 2 / 4 / 6 / 8 in the sweeps, 3 / 5 / 7 in the priority demo.
+- **Strategy** — `static`, `patrol`, `greedy_patrol`, `priority_patrol`.
+- **Fleet composition** — homogeneous in the sweeps and priority demo; heterogeneous (`sentinel` + `scout`) in the policy comparison.
+- **Mission length** — 240–300 timesteps depending on scenario.
+- **Number of seeds per cell** — 3–5 in the sweeps, 4 in the priority demo, 5 in the policy comparison. All seeds are derived deterministically from the strategy name and grid coordinates.
 
-### 2. Baseline Scenario
+## Metrics
 
-The baseline scenario serves as the reference point for all executed experiments.
+Every workflow records the metrics defined in `RunMetrics` (`src/isr_trade_study/sim/metrics.py`):
 
-**Baseline characteristics:**
-- Fixed two-dimensional operational area
-- Homogeneous ISR drone fleet
-- Fixed mission duration
-- Static and patrol-based deployment strategies
-- Linear operational cost model
-- Full fleet availability over the mission horizon
+- Coverage timeseries, average, and final.
+- Weighted coverage timeseries, average, and final.
+- Priority cell coverage.
+- Revisit-gap mean / p90 / fraction-within-threshold (global and priority-restricted).
+- Task service rate, task completion rate, response-time mean / p90 / fraction-within-threshold.
+- Total cost, utilization, redundancy ratio, coverage efficiency.
 
-All executed experiments are compared against this baseline configuration.
+Each workflow then layers a composite `mission_fit_score` on top of those raw metrics, with weights configurable in the workflow YAML.
 
----
+## Reporting
 
-### 3. Experimental Factors (Executed)
+For each workflow:
 
-The following factors were varied systematically in executed experiments:
+- Raw and aggregated CSVs land under `results/{workflow}/<run-id>/`.
+- The dynamic policy comparison also persists Parquet + DuckDB and renders a per-run dashboard.
+- A markdown brief is written next to the data so the analyst-style narrative is reviewable without running anything.
+- Stable showcase figures land under `docs/figures/` so the README and the live demo can reference them across runs.
 
-#### 3.1 Fleet Size
-- Number of available ISR drones
-- Evaluated across low to high fleet sizes
+## Success criteria
 
-#### 3.2 Sensor Footprint
-- Sensor coverage radius
-- Represents alternative sensor capabilities or operating altitudes
+The program is considered effective if it:
 
-#### 3.3 Deployment Strategy
-- Static loiter deployments
-- Patrol-based deployments using a predefined stochastic movement policy
-
-Each factor was varied in a controlled manner to isolate its impact on performance metrics.
-
----
-
-### 4. Executed Scenarios
-
-Executed experiments include:
-- Static deployment sweeps across fleet size and sensor footprint
-- Patrol deployment sweeps across the same parameter space
-- Direct comparison of static versus patrol strategies under identical resource constraints
-
-Each scenario was defined using configuration files to ensure reproducibility.
-
----
-
-### 5. Simulation Runs
-
-For each executed scenario:
-- Multiple simulation runs were performed to account for stochastic variability
-- Controlled random seeds were used to ensure fair comparisons
-- Results were aggregated across runs for reporting and analysis
-
----
-
-### 6. Performance Metrics (Executed)
-
-The following metrics were computed for executed experiments:
-
-- Cumulative coverage over the mission horizon
-- Revisit gap statistics (mean and tail behavior)
-- Persistence threshold score (percentage of revisits within a fixed timestep threshold)
-- Total operational cost
-- Fleet utilization
-
-Metrics were evaluated at the mission level and aggregated across runs.
-
----
-
-### 7. Comparison Methodology
-
-Executed results were analyzed using:
-- Parameter sweep comparison tables
-- Coverage–cost tradeoff plots
-- Strategy-level comparisons highlighting persistence versus spatial reach
-- Sensitivity observation across fleet size and sensor footprint
-
-The analysis emphasizes tradeoffs rather than optimization toward a single objective.
-
----
-
-## Part II — Planned Extensions
-
-### 8. Additional Experimental Factors (Planned)
-
-Future experiments may introduce:
-- Mission duration as an explicit experimental factor
-- Alternative operational area sizes and shapes
-- Region-weighted coverage priorities
-
----
-
-### 9. Alternative Deployment Policies (Planned)
-
-Planned extensions include evaluation of alternative patrol policies, such as:
-- Structured sweep or sector-based patrols
-- Persistence-aware patrol policies
-- Hybrid static–patrol deployments
-
-These policies will be evaluated relative to the executed baseline strategies.
-
----
-
-### 10. Optimization-Based Experiments (Planned)
-
-Future work may incorporate:
-- Optimization-based deployment strategies
-- Pareto frontier identification across coverage, persistence, and cost
-- Constraint-driven strategy selection based on mission priorities
-
----
-
-### 11. Performance and Scalability Extensions (Planned)
-
-To support larger scenario sweeps, planned work includes:
-- Profiling and identification of simulation bottlenecks
-- Selective C++ acceleration of performance-critical components
-- Evaluation of scalability across larger grids and longer missions
-
----
-
-### 12. Experiment Traceability
-
-All experiments, executed and planned, are designed to maintain:
-- Explicit configuration files
-- Traceability from results to assumptions
-- Reproducibility across code versions
-
----
-
-### 13. Success Criteria
-
-The experimental program is considered successful if it:
-- Clearly illustrates tradeoffs between competing mission objectives
-- Distinguishes operational strengths and limitations of deployment strategies
-- Produces decision-relevant insights rather than purely technical metrics
-- Supports future extension toward optimization and performance scaling
+- Surfaces operational tradeoffs (coverage vs persistence, response vs reach) clearly.
+- Distinguishes the strengths and limitations of each policy under controlled changes.
+- Produces decision-relevant outputs (ranked policies, briefs, dashboards) rather than only technical metrics.
+- Stays open to plugging in optimization-based or learned policies without changing the metric or report layer.
