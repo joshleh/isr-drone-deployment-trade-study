@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Josh Lee" }]
-keywords = ["isr", "operations-analysis", "trade-study", "simulation", "anduril"]
+keywords = ["isr", "operations-analysis", "trade-study", "simulation", "monte-carlo", "drone"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
