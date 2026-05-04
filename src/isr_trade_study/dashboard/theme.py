@@ -86,11 +86,25 @@ def render_metric_card(label: str, value: str, *, delta: str | None = None) -> s
     )
 
 
-def render_figure(src: str, caption: str) -> str:
+def render_figure(src: str, caption: str, *, wide: bool = False) -> str:
+    """Render a clickable figure tile.
+
+    The image is wrapped in an anchor pointing back at the source PNG so the
+    full-resolution plot opens in a new tab. ``wide=True`` adds a modifier
+    class so the gallery grid lets the figure span two columns when there's
+    room (multi-panel matplotlib outputs need the extra width to stay
+    legible).
+    """
+    classes = "figure figure--wide" if wide else "figure"
+    safe_src = html.escape(src)
+    safe_caption = html.escape(caption)
     return (
-        '<figure class="figure">'
-        f'<img src="{html.escape(src)}" alt="{html.escape(caption)}">'
-        f'<figcaption>{html.escape(caption)}</figcaption>'
+        f'<figure class="{classes}">'
+        f'<a class="figure__link" href="{safe_src}" target="_blank" rel="noopener noreferrer" '
+        f'title="Open full-size image in new tab">'
+        f'<img src="{safe_src}" alt="{safe_caption}">'
+        f"</a>"
+        f"<figcaption>{safe_caption}</figcaption>"
         "</figure>"
     )
 

@@ -449,6 +449,7 @@ td.numeric, th.numeric {
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
   gap: 18px;
 }
 
@@ -459,6 +460,29 @@ td.numeric, th.numeric {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  align-self: start;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.figure--wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .figure--wide {
+    grid-column: auto;
+  }
+}
+
+.figure__link {
+  display: block;
+  line-height: 0;
+  background: #0f1418;
+}
+
+.figure__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .figure img {
@@ -466,6 +490,12 @@ td.numeric, th.numeric {
   width: 100%;
   height: auto;
   background: #0f1418;
+}
+
+.figure:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
 }
 
 .figure figcaption {

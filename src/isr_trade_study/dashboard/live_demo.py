@@ -28,13 +28,13 @@ from .theme import (
 )
 
 
-_STABLE_FIGURES: tuple[tuple[str, str], ...] = (
-    ("demo_priority_priority_vs_global.png", "Priority vs global coverage"),
-    ("demo_priority_best_timeseries.png", "Best static vs patrol timeseries"),
-    ("demo_priority_redundancy_vs_coverage.png", "Redundancy vs weighted coverage"),
-    ("policy_dynamic_strategy_bars.png", "Policy comparison summary"),
-    ("policy_dynamic_task_service_vs_response.png", "Task service vs response time"),
-    ("policy_dynamic_timeseries.png", "Policy timeseries: coverage and task service"),
+_STABLE_FIGURES: tuple[tuple[str, str, bool], ...] = (
+    ("demo_priority_priority_vs_global.png", "Priority vs global coverage", False),
+    ("demo_priority_best_timeseries.png", "Best static vs patrol timeseries", True),
+    ("demo_priority_redundancy_vs_coverage.png", "Redundancy vs weighted coverage", False),
+    ("policy_dynamic_strategy_bars.png", "Policy comparison summary", True),
+    ("policy_dynamic_task_service_vs_response.png", "Task service vs response time", False),
+    ("policy_dynamic_timeseries.png", "Policy timeseries: coverage and task service", True),
 )
 
 
@@ -362,14 +362,14 @@ def _ranking_section(demo: dict[str, Any], policy: dict[str, Any]) -> str:
 
 def _figures_section(figures_root: Path, live_demo_root: Path) -> str:
     figure_html: list[str] = []
-    for filename, caption in _STABLE_FIGURES:
+    for filename, caption, wide in _STABLE_FIGURES:
         path = figures_root / filename
         rel = relative_to(live_demo_root, path)
         if rel is None:
             continue
         if not path.exists():
             continue
-        figure_html.append(render_figure(rel, caption))
+        figure_html.append(render_figure(rel, caption, wide=wide))
 
     body = "".join(figure_html) if figure_html else (
         '<div class="empty"><strong>No figures yet.</strong> '
